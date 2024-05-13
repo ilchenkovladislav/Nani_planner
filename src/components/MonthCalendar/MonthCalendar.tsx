@@ -53,6 +53,10 @@ export function MonthCalendar({
         y: 0,
     });
 
+    const [allowedDirection, setAllowedDirection] = useState<
+        "horizontal" | "vertical" | null
+    >(null);
+
     const [verticalCalendar, verticalCalendarApi] = useSpring(() => ({ y: 0 }));
 
     const [verticalBottomBlock, verticalBottomBlockApi] = useSpring(() => ({
@@ -63,10 +67,17 @@ export function MonthCalendar({
         from: { x: -CALENDAR_WIDTH },
     }));
 
+    // const datesInMonth = (date: Date) =>
+    //     isOpened ? getDaysInMonthWithISOWeeks(date) : getWeekDates(date);
+
     const datesInMonth = (date: Date) =>
-        isOpened || isTransitioning || isAnimating
-            ? getDaysInMonthWithISOWeeks(date)
-            : getWeekDates(date);
+        allowedDirection !== "vertical" && !isOpened
+            ? getWeekDates(date)
+            : isOpened ||
+                (isTransitioning && allowedDirection !== "horizontal") ||
+                (isAnimating && allowedDirection === "vertical")
+              ? getDaysInMonthWithISOWeeks(date)
+              : getWeekDates(date);
 
     const [ratioY, setRatioY] = useState(
         HEIGHT_UP_SELECTED_WEEK / HEIGHT_FOUR_WEEKS,
@@ -74,10 +85,6 @@ export function MonthCalendar({
     useEffect(() => {
         setRatioY(HEIGHT_UP_SELECTED_WEEK / HEIGHT_FOUR_WEEKS);
     }, [currentDate]);
-
-    const [allowedDirection, setAllowedDirection] = useState<
-        "horizontal" | "vertical" | null
-    >(null);
 
     function setWeeklyItems() {
         const getWeeklyItems = (currentDate: Date): Date[] => [
@@ -107,7 +114,7 @@ export function MonthCalendar({
                     to: {
                         y: -HEIGHT_FOUR_WEEKS,
                     },
-                    onRest: () => {
+                    onResolve: () => {
                         setWeeklyItems();
                         setIsOpened(false);
                         setIsAnimating(false);
@@ -128,10 +135,10 @@ export function MonthCalendar({
                     to: {
                         y: -HEIGHT_FOUR_WEEKS,
                     },
-                    onRest: () => {
+                    onResolve: () => {
                         setWeeklyItems();
-                        setIsOpened(false);
                         setIsAnimating(false);
+                        setIsOpened(false);
                         setTimeout(() => {
                             verticalCalendarApi.set({ y: 0 });
                             // setPosition((prev) => ({ ...prev, y: 0 }));
@@ -146,12 +153,12 @@ export function MonthCalendar({
                     to: {
                         y: -HEIGHT_FOUR_WEEKS,
                     },
-                    onRest: () => {
+                    onResolve: () => {
                         setWeeklyItems();
-                        setIsOpened(false);
                         setIsAnimating(false);
                         setTimeout(() => {
                             verticalCalendarApi.set({ y: 0 });
+                            setIsOpened(false);
                         }, 0);
                     },
                 });
@@ -179,7 +186,7 @@ export function MonthCalendar({
                     onStart: () => {
                         setIsOpened(true);
                     },
-                    onRest: () => {
+                    onResolve: () => {
                         setMonthlyItems();
                         setIsAnimating(false);
                         setTimeout(() => {
@@ -199,7 +206,7 @@ export function MonthCalendar({
                     onStart: () => {
                         setIsOpened(true);
                     },
-                    onRest: () => {
+                    onResolve: () => {
                         setMonthlyItems();
                         setIsAnimating(false);
                     },
@@ -225,7 +232,7 @@ export function MonthCalendar({
                     onStart: () => {
                         setIsOpened(true);
                     },
-                    onRest: () => {
+                    onResolve: () => {
                         setMonthlyItems();
                         setIsAnimating(false);
                     },
@@ -246,20 +253,22 @@ export function MonthCalendar({
     function handlePointerDown(e: PointerEvent<HTMLDivElement>) {
         setPointerStart({ x: e.clientX, y: e.clientY });
 
-        if (!isOpened) {
-            console.log(-HEIGHT_FOUR_WEEKS);
-            // verticalCalendarApi.set({ y: -HEIGHT_FOUR_WEEKS });
-            verticalCalendarApi.set({ y: -HEIGHT_FOUR_WEEKS + 0.5 });
-        }
+        // if (!isOpened) {
+        // verticalCalendarApi.set({ y: -HEIGHT_FOUR_WEEKS + 2 });
+        // }
         setIsTransitioning(true);
         setAllowedDirection(null);
     }
 
     function handlePointerMove(e: PointerEvent<HTMLDivElement>) {
+        console.log("move");
+
         if (allowedDirection === "horizontal") return;
+        const deltaY = lastPosition.y + e.clientY - pointerStart.y;
+
+        verticalCalendarApi.set({ y: deltaY });
 
         if (allowedDirection === null) {
-            // Determine the direction of the initial movement
             if (
                 Math.abs(e.clientX - pointerStart.x) >
                 Math.abs(e.clientY - pointerStart.y)
@@ -268,9 +277,9 @@ export function MonthCalendar({
             } else {
                 setAllowedDirection("vertical");
             }
-        }
 
-        const deltaY = lastPosition.y + e.clientY - pointerStart.y;
+            return;
+        }
 
         if (deltaY <= -240) {
             // setPosition((prev) => ({ ...prev, y: -240 }));
@@ -286,17 +295,16 @@ export function MonthCalendar({
             return;
         }
 
-        verticalCalendarApi.set({ y: deltaY });
         verticalBottomBlockApi.set({ y: deltaY });
 
         // setPosition((prev) => ({ ...prev, y: deltaY }));
     }
 
     function handlePointerUp(e: PointerEvent<HTMLDivElement>) {
-        if (allowedDirection === "horizontal") return;
+        if (!allowedDirection || allowedDirection === "horizontal") return;
 
         const deltaY = lastPosition.y + e.clientY - pointerStart.y;
-        setLastPosition((prev) => ({ ...prev, y: verticalCalendar.y.get() }));
+        // setLastPosition((prev) => ({ ...prev, y: verticalCalendar.y.get() }));
         // verticalCalendarApi.set((y) => ({
         //     y: y * ratioY,
         // }));
@@ -346,26 +354,16 @@ export function MonthCalendar({
             to: {
                 x: -CALENDAR_WIDTH * 2,
             },
-            onRest: () => {
+            onResolve: () => {
                 setTimeout(() => {
                     if (isOpened) {
                         setItems((prev) => {
-                            console.log([
-                                prev[1],
-                                prev[2],
-                                addMonths(prev[2], 1),
-                            ]);
                             onUpdateCurrentDate(prev[2]);
                             // setSelectedDay((prev) => addMonths(prev, 1));
                             return [prev[1], prev[2], addMonths(prev[2], 1)];
                         });
                     } else {
                         setItems((prev) => {
-                            console.log([
-                                prev[1],
-                                prev[2],
-                                addWeeks(prev[2], 1),
-                            ]);
                             onUpdateCurrentDate(prev[2]);
                             // setSelectedDay((prev) => addWeeks(prev, 1));
                             return [prev[1], prev[2], addWeeks(prev[2], 1)];
@@ -394,6 +392,9 @@ export function MonthCalendar({
             to: {
                 x: -CALENDAR_WIDTH,
             },
+            onResolve: () => {
+                setIsAnimating(false);
+            },
         });
     };
 
@@ -404,7 +405,7 @@ export function MonthCalendar({
             to: {
                 x: 0,
             },
-            onRest: () => {
+            onResolve: () => {
                 setTimeout(() => {
                     if (isOpened) {
                         setItems((prev) => {
@@ -441,6 +442,7 @@ export function MonthCalendar({
 
     const handleCarouselPointerMove = (e: PointerEvent<HTMLDivElement>) => {
         if (allowedDirection === "vertical") return;
+        verticalCalendarApi.set({ y: 0 });
 
         const deltaX = lastPosition.x + e.clientX - pointerStart.x;
 
@@ -487,9 +489,9 @@ export function MonthCalendar({
             //     x: -CALENDAR_WIDTH,
             // });
         }
-    };
 
-    console.log(items);
+        setIsTransitioning(false);
+    };
 
     return (
         <div
@@ -511,7 +513,24 @@ export function MonthCalendar({
             >
                 <div className="grid h-[280px] grid-cols-[30px_1fr]">
                     <Weeks
-                        isOpened={isOpened || isTransitioning || isAnimating}
+                        // isOpened={isOpened}
+                        isOpened={
+                            allowedDirection !== "vertical" && !isOpened
+                                ? false
+                                : isOpened ||
+                                    (isTransitioning &&
+                                        allowedDirection !== "horizontal") ||
+                                    (isAnimating &&
+                                        allowedDirection === "vertical")
+                                  ? true
+                                  : false
+                        }
+                        // isOpened={
+                        //     isOpened ||
+                        //     (isTransitioning &&
+                        //         allowedDirection !== "horizontal") ||
+                        //     (isAnimating && allowedDirection === "vertical")
+                        // }
                         currentDate={currentDate}
                     />
                     <div
