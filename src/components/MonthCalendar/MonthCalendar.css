@@ -4,6 +4,7 @@
 
 .carousel-content {
     display: flex;
+    align-items: start;
     /* transition: all 500ms ease-out; */
     -ms-overflow-style: none;
     scrollbar-width: none;

@@ -339,151 +339,157 @@ export function MonthCalendar({
         setIsTransitioning(false);
     }
 
-    // const next = () => {
-    //     setIsAnimating(true);
+    const next = () => {
+        setIsAnimating(true);
 
-    //     horizontalCalendarApi.start({
-    //         to: {
-    //             x: -CALENDAR_WIDTH * 2,
-    //         },
-    //         onRest: () => {
-    //             setTimeout(() => {
-    //                 if (isOpened) {
-    //                     setItems((prev) => {
-    //                         console.log([
-    //                             prev[1],
-    //                             prev[2],
-    //                             addMonths(prev[2], 1),
-    //                         ]);
-    //                         // onUpdateCurrentDate(prev[2]);
-    //                         // setSelectedDay((prev) => addMonths(prev, 1));
-    //                         return [prev[1], prev[2], addMonths(prev[2], 1)];
-    //                     });
-    //                 } else {
-    //                     setItems((prev) => {
-    //                         console.log([
-    //                             prev[1],
-    //                             prev[2],
-    //                             addWeeks(prev[2], 1),
-    //                         ]);
-    //                         // onUpdateCurrentDate(prev[2]);
-    //                         // setSelectedDay((prev) => addWeeks(prev, 1));
-    //                         return [prev[1], prev[2], addWeeks(prev[2], 1)];
-    //                     });
-    //                 }
+        horizontalCalendarApi.start({
+            to: {
+                x: -CALENDAR_WIDTH * 2,
+            },
+            onRest: () => {
+                setTimeout(() => {
+                    if (isOpened) {
+                        setItems((prev) => {
+                            console.log([
+                                prev[1],
+                                prev[2],
+                                addMonths(prev[2], 1),
+                            ]);
+                            onUpdateCurrentDate(prev[2]);
+                            // setSelectedDay((prev) => addMonths(prev, 1));
+                            return [prev[1], prev[2], addMonths(prev[2], 1)];
+                        });
+                    } else {
+                        setItems((prev) => {
+                            console.log([
+                                prev[1],
+                                prev[2],
+                                addWeeks(prev[2], 1),
+                            ]);
+                            onUpdateCurrentDate(prev[2]);
+                            // setSelectedDay((prev) => addWeeks(prev, 1));
+                            return [prev[1], prev[2], addWeeks(prev[2], 1)];
+                        });
+                    }
 
-    //                 horizontalCalendarApi.set({
-    //                     x: -CALENDAR_WIDTH,
-    //                 });
+                    horizontalCalendarApi.set({
+                        x: -CALENDAR_WIDTH,
+                    });
 
-    //                 // setPosition((prev) => ({ ...prev, x: -CALENDAR_WIDTH }));
-    //                 setLastPosition((prev) => ({
-    //                     ...prev,
-    //                     x: -CALENDAR_WIDTH,
-    //                 }));
-    //             }, 700);
-    //             setIsAnimating(false);
-    //         },
-    //     });
-    // };
+                    // setPosition((prev) => ({ ...prev, x: -CALENDAR_WIDTH }));
+                    setLastPosition((prev) => ({
+                        ...prev,
+                        x: -CALENDAR_WIDTH,
+                    }));
+                }, 0);
+                setIsAnimating(false);
+            },
+        });
+    };
 
-    // const canceled = () => {
-    //     setIsAnimating(true);
+    const canceled = () => {
+        setIsAnimating(true);
 
-    //     horizontalCalendarApi.start({
-    //         to: {
-    //             x: -CALENDAR_WIDTH,
-    //         },
-    //     });
-    // };
+        horizontalCalendarApi.start({
+            to: {
+                x: -CALENDAR_WIDTH,
+            },
+        });
+    };
 
-    // const prev = () => {
-    //     setIsAnimating(true);
+    const prev = () => {
+        setIsAnimating(true);
 
-    //     horizontalCalendarApi.start({
-    //         to: {
-    //             x: 0,
-    //         },
-    //         onRest: () => {
-    //             setTimeout(() => {
-    //                 if (isOpened) {
-    //                     setItems((prev) => {
-    //                         // onUpdateCurrentDate(prev[0]);
-    //                         setSelectedDay((prev) => subMonths(prev, 1));
-    //                         return [subMonths(prev[0], 1), prev[0], prev[1]];
-    //                     });
-    //                 } else {
-    //                     setItems((prev) => {
-    //                         // onUpdateCurrentDate(prev[0]);
-    //                         setSelectedDay((prev) => subWeeks(prev, 1));
-    //                         return [subWeeks(prev[0], 1), prev[0], prev[1]];
-    //                     });
-    //                 }
+        horizontalCalendarApi.start({
+            to: {
+                x: 0,
+            },
+            onRest: () => {
+                setTimeout(() => {
+                    if (isOpened) {
+                        setItems((prev) => {
+                            onUpdateCurrentDate(prev[0]);
+                            // setSelectedDay((prev) => subMonths(prev, 1));
+                            return [subMonths(prev[0], 1), prev[0], prev[1]];
+                        });
+                    } else {
+                        setItems((prev) => {
+                            onUpdateCurrentDate(prev[0]);
+                            // setSelectedDay((prev) => subWeeks(prev, 1));
+                            return [subWeeks(prev[0], 1), prev[0], prev[1]];
+                        });
+                    }
 
-    //                 horizontalCalendarApi.set({
-    //                     x: -CALENDAR_WIDTH,
-    //                 });
+                    horizontalCalendarApi.set({
+                        x: -CALENDAR_WIDTH,
+                    });
 
-    //                 // setPosition((prev) => ({ ...prev, x: -CALENDAR_WIDTH }));
-    //                 setLastPosition((prev) => ({
-    //                     ...prev,
-    //                     x: -CALENDAR_WIDTH,
-    //                 }));
-    //             }, 700);
-    //             setIsAnimating(false);
-    //         },
-    //     });
-    // };
+                    // setPosition((prev) => ({ ...prev, x: -CALENDAR_WIDTH }));
+                    setLastPosition((prev) => ({
+                        ...prev,
+                        x: -CALENDAR_WIDTH,
+                    }));
+                }, 0);
+                setIsAnimating(false);
+            },
+        });
+    };
 
-    // const handleCarouselPointerDown = (e: PointerEvent<HTMLDivElement>) => {
-    //     setPointerStart({ x: e.clientX, y: e.clientY });
-    // };
+    const handleCarouselPointerDown = (e: PointerEvent<HTMLDivElement>) => {
+        setPointerStart({ x: e.clientX, y: e.clientY });
+    };
 
-    // const handleCarouselPointerMove = (e: PointerEvent<HTMLDivElement>) => {
-    //     const deltaX = lastPosition.x + e.clientX - pointerStart.x;
+    const handleCarouselPointerMove = (e: PointerEvent<HTMLDivElement>) => {
+        if (allowedDirection === "vertical") return;
 
-    //     horizontalCalendarApi.set({
-    //         x: deltaX,
-    //     });
-    //     // setPosition((prev) => ({ ...prev, x: deltaX }));
-    // };
+        const deltaX = lastPosition.x + e.clientX - pointerStart.x;
 
-    // const handleCarouselPointerUp = (e: PointerEvent<HTMLDivElement>) => {
-    //     const deltaX = e.clientX - pointerStart.x;
-    //     setLastPosition((prev) => ({ ...prev, x: horizontalCalendar.x.get() }));
-    //     // horizontalCalendarApi.set({
-    //     //     x: position.x,
-    //     // });
+        horizontalCalendarApi.set({
+            x: deltaX,
+        });
+        // setPosition((prev) => ({ ...prev, x: deltaX }));
+    };
 
-    //     if (deltaX >= 100) {
-    //         prev();
-    //         setLastPosition((prev) => ({ ...prev, x: 0 }));
-    //         // setPosition((prev) => ({ ...prev, x: 0 }));
-    //         horizontalCalendarApi.set({
-    //             x: 0,
-    //         });
-    //     } else if (deltaX <= -100) {
-    //         next();
-    //         setLastPosition((prev) => ({
-    //             ...prev,
-    //             x: -CALENDAR_WIDTH * 2,
-    //         }));
-    //         // setPosition((prev) => ({ ...prev, x: -CALENDAR_WIDTH * 2 }));
-    //         horizontalCalendarApi.set({
-    //             x: -CALENDAR_WIDTH * 2,
-    //         });
-    //     } else {
-    //         canceled();
-    //         setLastPosition((prev) => ({
-    //             ...prev,
-    //             x: -CALENDAR_WIDTH,
-    //         }));
-    //         // setPosition((prev) => ({ ...prev, x: -CALENDAR_WIDTH }));
-    //         horizontalCalendarApi.set({
-    //             x: -CALENDAR_WIDTH,
-    //         });
-    //     }
-    // };
+    const handleCarouselPointerUp = (e: PointerEvent<HTMLDivElement>) => {
+        if (allowedDirection === "vertical") return;
+
+        const deltaX = e.clientX - pointerStart.x;
+        setLastPosition((prev) => ({ ...prev, x: horizontalCalendar.x.get() }));
+        // horizontalCalendarApi.set({
+        //     x: position.x,
+        // });
+
+        if (deltaX >= 100) {
+            prev();
+            setLastPosition((prev) => ({ ...prev, x: 0 }));
+            // setPosition((prev) => ({ ...prev, x: 0 }));
+            // horizontalCalendarApi.set({
+            //     x: 0,
+            // });
+        } else if (deltaX <= -100) {
+            next();
+            setLastPosition((prev) => ({
+                ...prev,
+                x: -CALENDAR_WIDTH * 2,
+            }));
+            // setPosition((prev) => ({ ...prev, x: -CALENDAR_WIDTH * 2 }));
+            // horizontalCalendarApi.set({
+            //     x: -CALENDAR_WIDTH * 2,
+            // });
+        } else {
+            canceled();
+            setLastPosition((prev) => ({
+                ...prev,
+                x: -CALENDAR_WIDTH,
+            }));
+            // setPosition((prev) => ({ ...prev, x: -CALENDAR_WIDTH }));
+            // horizontalCalendarApi.set({
+            //     x: -CALENDAR_WIDTH,
+            // });
+        }
+    };
+
+    console.log(items);
 
     return (
         <div
@@ -510,9 +516,9 @@ export function MonthCalendar({
                     />
                     <div
                         className="carousel-content-wrapper"
-                        // onPointerDown={handleCarouselPointerDown}
-                        // onPointerMove={handleCarouselPointerMove}
-                        // onPointerUp={handleCarouselPointerUp}
+                        onPointerDown={handleCarouselPointerDown}
+                        onPointerMove={handleCarouselPointerMove}
+                        onPointerUp={handleCarouselPointerUp}
                     >
                         <animated.div
                             className="carousel-content"
