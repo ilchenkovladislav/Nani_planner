@@ -1,7 +1,5 @@
-import { useEffect, useLayoutEffect, useState, type PointerEvent } from "react";
+import { useEffect, useState, type PointerEvent } from "react";
 
-import { type CarouselApi } from "@/components/ui/carousel";
-import { EmblaCarouselType } from "embla-carousel";
 import {
     isToday,
     format,
@@ -14,16 +12,12 @@ import {
     getWeekOfMonth,
 } from "date-fns";
 
-import {
-    Carousel,
-    CarouselContent,
-    CarouselItem,
-} from "@/components/ui/carousel";
 import cn from "classnames";
 import { getDaysInMonthWithISOWeeks, getWeekDates } from "@/lib/calendarUtils";
 import { DaysOfWeek } from "../DaysOfWeek/DaysOfWeek";
 import { animated, useSpring } from "@react-spring/web";
 import { Weeks } from "../Weeks/Weeks";
+import "./MonthCalendar.css";
 
 type MonthCalendarProps = {
     currentDate: Date;
@@ -33,24 +27,57 @@ type MonthCalendarProps = {
 const GAP = 20;
 const ROW_HEIGHT = 40;
 const HEIGHT_FOUR_WEEKS = GAP * 4 + ROW_HEIGHT * 4;
+const CALENDAR_WIDTH = 400;
 
 export function MonthCalendar({
     currentDate,
     onUpdateCurrentDate,
 }: MonthCalendarProps) {
-    const [selectedDay, setSelectedDay] = useState<Date>(new Date());
+    // const [selectedDay, setSelectedDay] = useState<Date>(new Date());
 
-    const NUMBER_ROWS = getWeekOfMonth(selectedDay, { weekStartsOn: 1 }) - 1;
+    const NUMBER_ROWS = getWeekOfMonth(currentDate, { weekStartsOn: 1 }) - 1;
     const HEIGHT_UP_SELECTED_WEEK =
         GAP * NUMBER_ROWS + ROW_HEIGHT * NUMBER_ROWS;
-
-    const [carouselApi, setCarouselApi] = useState<CarouselApi>();
 
     const prevMonth = subMonths(currentDate, 1);
     const nextMonth = addMonths(currentDate, 1);
 
     const [items, setItems] = useState([prevMonth, currentDate, nextMonth]);
     const [isOpened, setIsOpened] = useState(true);
+    const [isTransitioning, setIsTransitioning] = useState(false);
+    const [isAnimating, setIsAnimating] = useState(false);
+    // const [position, setPosition] = useState({ x: -CALENDAR_WIDTH, y: 0 });
+    const [pointerStart, setPointerStart] = useState({ x: 0, y: 0 });
+    const [lastPosition, setLastPosition] = useState({
+        x: -CALENDAR_WIDTH,
+        y: 0,
+    });
+
+    const [verticalCalendar, verticalCalendarApi] = useSpring(() => ({ y: 0 }));
+
+    const [verticalBottomBlock, verticalBottomBlockApi] = useSpring(() => ({
+        y: 0,
+    }));
+
+    const [horizontalCalendar, horizontalCalendarApi] = useSpring(() => ({
+        from: { x: -CALENDAR_WIDTH },
+    }));
+
+    const datesInMonth = (date: Date) =>
+        isOpened || isTransitioning || isAnimating
+            ? getDaysInMonthWithISOWeeks(date)
+            : getWeekDates(date);
+
+    const [ratioY, setRatioY] = useState(
+        HEIGHT_UP_SELECTED_WEEK / HEIGHT_FOUR_WEEKS,
+    );
+    useEffect(() => {
+        setRatioY(HEIGHT_UP_SELECTED_WEEK / HEIGHT_FOUR_WEEKS);
+    }, [currentDate]);
+
+    const [allowedDirection, setAllowedDirection] = useState<
+        "horizontal" | "vertical" | null
+    >(null);
 
     function setWeeklyItems() {
         const getWeeklyItems = (currentDate: Date): Date[] => [
@@ -71,20 +98,17 @@ export function MonthCalendar({
         const items = getMonthlyItems(currentDate);
         setItems(items);
     }
-    // 1. Открыт -> закрываем +
-    // 2. Закрыт -> открываем +
-    // 3. Открыт -> недозакрываем -
-    // 4. Закрыт -> недооткрываем ?
 
     function closeCalendar() {
         setIsAnimating(true);
-        switch (getWeekOfMonth(selectedDay)) {
+        switch (getWeekOfMonth(currentDate)) {
             case 1: {
-                bottomApi.start({
+                verticalBottomBlockApi.start({
                     to: {
                         y: -HEIGHT_FOUR_WEEKS,
                     },
                     onRest: () => {
+                        setWeeklyItems();
                         setIsOpened(false);
                         setIsAnimating(false);
                     },
@@ -95,34 +119,43 @@ export function MonthCalendar({
             case 2:
             case 3:
             case 4: {
-                bottomApi.start({
+                verticalBottomBlockApi.start({
                     to: {
                         y: -HEIGHT_FOUR_WEEKS,
                     },
                 });
-                api.start({
+                verticalCalendarApi.start({
                     to: {
-                        y: -HEIGHT_UP_SELECTED_WEEK,
+                        y: -HEIGHT_FOUR_WEEKS,
                     },
                     onRest: () => {
+                        setWeeklyItems();
                         setIsOpened(false);
                         setIsAnimating(false);
+                        setTimeout(() => {
+                            verticalCalendarApi.set({ y: 0 });
+                            // setPosition((prev) => ({ ...prev, y: 0 }));
+                        }, 0);
                     },
                 });
 
                 break;
             }
             case 5: {
-                api.start({
+                verticalCalendarApi.start({
                     to: {
                         y: -HEIGHT_FOUR_WEEKS,
                     },
                     onRest: () => {
+                        setWeeklyItems();
                         setIsOpened(false);
                         setIsAnimating(false);
+                        setTimeout(() => {
+                            verticalCalendarApi.set({ y: 0 });
+                        }, 0);
                     },
                 });
-                bottomApi.start({
+                verticalBottomBlockApi.start({
                     to: {
                         y: -HEIGHT_FOUR_WEEKS,
                     },
@@ -137,9 +170,9 @@ export function MonthCalendar({
 
     function openCalendar() {
         setIsAnimating(true);
-        switch (getWeekOfMonth(selectedDay)) {
+        switch (getWeekOfMonth(currentDate)) {
             case 1: {
-                bottomApi.start({
+                verticalBottomBlockApi.start({
                     to: {
                         y: 0,
                     },
@@ -147,9 +180,11 @@ export function MonthCalendar({
                         setIsOpened(true);
                     },
                     onRest: () => {
-                        // TODO:: Нужно убрать обновление стейта при закрытии и открытии, потому что из-за этого происходит баг с слайдером
-                        // setMonthlyItems();
+                        setMonthlyItems();
                         setIsAnimating(false);
+                        setTimeout(() => {
+                            verticalCalendarApi.set({ y: 0 });
+                        }, 0);
                     },
                 });
                 break;
@@ -157,7 +192,7 @@ export function MonthCalendar({
             case 2:
             case 3:
             case 4: {
-                bottomApi.start({
+                verticalBottomBlockApi.start({
                     to: {
                         y: 0,
                     },
@@ -165,11 +200,11 @@ export function MonthCalendar({
                         setIsOpened(true);
                     },
                     onRest: () => {
-                        // setMonthlyItems();
+                        setMonthlyItems();
                         setIsAnimating(false);
                     },
                 });
-                api.start({
+                verticalCalendarApi.start({
                     to: {
                         y: 0,
                     },
@@ -178,12 +213,12 @@ export function MonthCalendar({
                 break;
             }
             case 5: {
-                api.start({
+                verticalCalendarApi.start({
                     to: {
                         y: 0,
                     },
                 });
-                bottomApi.start({
+                verticalBottomBlockApi.start({
                     to: {
                         y: 0,
                     },
@@ -191,8 +226,8 @@ export function MonthCalendar({
                         setIsOpened(true);
                     },
                     onRest: () => {
+                        setMonthlyItems();
                         setIsAnimating(false);
-                        // setMonthlyItems();
                     },
                 });
 
@@ -204,162 +239,251 @@ export function MonthCalendar({
     }
 
     function dayClickHandle(day: Date) {
-        setSelectedDay(day);
+        // setSelectedDay(day);
         onUpdateCurrentDate(day);
-    }
-
-    useEffect(() => {
-        if (!carouselApi) {
-            return;
-        }
-
-        const handleSelect = (api: EmblaCarouselType) => {
-            setTimeout(() => {
-                if (isOpened) {
-                    setItems((prev) => {
-                        console.log(
-                            api.selectedScrollSnap(),
-                            api.previousScrollSnap(),
-                        );
-
-                        if (
-                            api.selectedScrollSnap() > api.previousScrollSnap()
-                        ) {
-                            onUpdateCurrentDate(prev[2]);
-                            setSelectedDay((prev) => addMonths(prev, 1));
-                            return [prev[1], prev[2], addMonths(prev[2], 1)];
-                        } else {
-                            onUpdateCurrentDate(prev[0]);
-                            setSelectedDay((prev) => subMonths(prev, 1));
-                            return [subMonths(prev[0], 1), prev[0], prev[1]];
-                        }
-                    });
-                } else {
-                    setItems((prev) => {
-                        if (
-                            api.selectedScrollSnap() > api.previousScrollSnap()
-                        ) {
-                            onUpdateCurrentDate(prev[2]);
-                            setSelectedDay((prev) => addWeeks(prev, 1));
-                            return [prev[1], prev[2], addWeeks(prev[2], 1)];
-                        } else {
-                            onUpdateCurrentDate(prev[0]);
-                            setSelectedDay((prev) => subWeeks(prev, 1));
-                            return [subWeeks(prev[0], 1), prev[0], prev[1]];
-                        }
-                    });
-                }
-            }, 700);
-        };
-
-        carouselApi.on("select", handleSelect);
-
-        return () => {
-            carouselApi.off("select", handleSelect);
-        };
-    }, [carouselApi, isOpened]);
-
-    useLayoutEffect(() => {
-        if (!carouselApi) {
-            return;
-        }
-
-        carouselApi.reInit({
-            startIndex: 1,
-        });
-    }, [carouselApi, items]);
-
-    const [{ y: springY }, api] = useSpring(() => ({
-        from: { y: 0 },
-    }));
-
-    const [{ y: bottomY }, bottomApi] = useSpring(() => ({
-        from: { y: 0 },
-    }));
-
-    const datesInMonth = (date: Date) =>
-        isOpened || isTransitioning || isAnimating
-            ? getDaysInMonthWithISOWeeks(date)
-            : getWeekDates(date);
-
-    const [posY, setPosY] = useState(0);
-    const [pointerStart, setPointerStart] = useState({ x: 0, y: 0 });
-    const [lastY, setLastY] = useState(0);
-    const [isTransitioning, setIsTransitioning] = useState(false);
-    const [isAnimating, setIsAnimating] = useState(false);
-
-    const [ratioY, setRatioY] = useState(
-        HEIGHT_UP_SELECTED_WEEK / HEIGHT_FOUR_WEEKS,
-    );
-    useEffect(() => {
-        setRatioY(HEIGHT_UP_SELECTED_WEEK / HEIGHT_FOUR_WEEKS);
-    }, [selectedDay]);
-
-    function handlePointerMove(e: PointerEvent<HTMLDivElement>) {
-        const deltaY = lastY + e.clientY - pointerStart.y;
-
-        if (deltaY <= -240) {
-            setPosY(-240);
-            return;
-        }
-
-        if (deltaY >= 0) {
-            setPosY(0);
-            return;
-        }
-
-        setPosY(deltaY);
-    }
-
-    function handlePointerUp(e: PointerEvent<HTMLDivElement>) {
-        const deltaY = lastY + e.clientY - pointerStart.y;
-        setLastY(posY);
-        api.set({
-            y: posY * ratioY,
-        });
-        bottomApi.set({
-            y: posY,
-        });
-
-        if (pointerStart.y - e.clientY >= 0) {
-            if (deltaY <= -50) {
-                closeCalendar();
-                setLastY(-240);
-                setPosY(-240);
-            } else {
-                openCalendar();
-                setLastY(0);
-                setPosY(0);
-            }
-        } else {
-            if (deltaY >= -240 + 50) {
-                openCalendar();
-                setLastY(0);
-                setPosY(0);
-            } else {
-                closeCalendar();
-                setLastY(-240);
-                setPosY(-240);
-            }
-        }
     }
 
     function handlePointerDown(e: PointerEvent<HTMLDivElement>) {
         setPointerStart({ x: e.clientX, y: e.clientY });
+
+        if (!isOpened) {
+            console.log(-HEIGHT_FOUR_WEEKS);
+            // verticalCalendarApi.set({ y: -HEIGHT_FOUR_WEEKS });
+            verticalCalendarApi.set({ y: -HEIGHT_FOUR_WEEKS + 0.5 });
+        }
         setIsTransitioning(true);
+        setAllowedDirection(null);
     }
 
-    useLayoutEffect(() => {
-        if (isAnimating) return;
+    function handlePointerMove(e: PointerEvent<HTMLDivElement>) {
+        if (allowedDirection === "horizontal") return;
 
-        console.log("layouteffect");
-
-        if (isOpened) {
-            setMonthlyItems();
-        } else {
-            setWeeklyItems();
+        if (allowedDirection === null) {
+            // Determine the direction of the initial movement
+            if (
+                Math.abs(e.clientX - pointerStart.x) >
+                Math.abs(e.clientY - pointerStart.y)
+            ) {
+                setAllowedDirection("horizontal");
+            } else {
+                setAllowedDirection("vertical");
+            }
         }
-    }, [isAnimating]);
+
+        const deltaY = lastPosition.y + e.clientY - pointerStart.y;
+
+        if (deltaY <= -240) {
+            // setPosition((prev) => ({ ...prev, y: -240 }));
+
+            verticalCalendarApi.set({ y: -240 });
+            // verticalCalendarApi.set({ y: -HEIGHT_UP_SELECTED_WEEK });
+            return;
+        }
+
+        if (deltaY >= 0) {
+            // setPosition((prev) => ({ ...prev, y: 0 }));
+            verticalCalendarApi.set({ y: 0 });
+            return;
+        }
+
+        verticalCalendarApi.set({ y: deltaY });
+        verticalBottomBlockApi.set({ y: deltaY });
+
+        // setPosition((prev) => ({ ...prev, y: deltaY }));
+    }
+
+    function handlePointerUp(e: PointerEvent<HTMLDivElement>) {
+        if (allowedDirection === "horizontal") return;
+
+        const deltaY = lastPosition.y + e.clientY - pointerStart.y;
+        setLastPosition((prev) => ({ ...prev, y: verticalCalendar.y.get() }));
+        // verticalCalendarApi.set((y) => ({
+        //     y: y * ratioY,
+        // }));
+
+        // verticalBottomBlockApi.set({
+        //     y: verticalCalendar.y.get(),
+        // });
+
+        if (pointerStart.y - e.clientY >= 0) {
+            if (deltaY <= -50) {
+                closeCalendar();
+                setLastPosition((prev) => ({
+                    ...prev,
+                    y: -HEIGHT_FOUR_WEEKS,
+                }));
+                // setPosition((prev) => ({ ...prev, y: -240 }));
+                // verticalCalendarApi.set({ y: -240 });
+            } else {
+                openCalendar();
+                setLastPosition((prev) => ({ ...prev, y: 0 }));
+                // setPosition((prev) => ({ ...prev, y: 0 }));
+                // verticalCalendarApi.set({ y: 0 });
+            }
+        } else {
+            if (deltaY >= -240 + 50) {
+                openCalendar();
+                setLastPosition((prev) => ({ ...prev, y: 0 }));
+                // setPosition((prev) => ({ ...prev, y: 0 }));
+                // verticalCalendarApi.set({ y: 0 });
+            } else {
+                closeCalendar();
+                setLastPosition((prev) => ({
+                    ...prev,
+                    y: -HEIGHT_FOUR_WEEKS,
+                }));
+                // setPosition((prev) => ({ ...prev, y: -240 }));
+                // verticalCalendarApi.set({ y: -240 });
+            }
+        }
+        setIsTransitioning(false);
+    }
+
+    // const next = () => {
+    //     setIsAnimating(true);
+
+    //     horizontalCalendarApi.start({
+    //         to: {
+    //             x: -CALENDAR_WIDTH * 2,
+    //         },
+    //         onRest: () => {
+    //             setTimeout(() => {
+    //                 if (isOpened) {
+    //                     setItems((prev) => {
+    //                         console.log([
+    //                             prev[1],
+    //                             prev[2],
+    //                             addMonths(prev[2], 1),
+    //                         ]);
+    //                         // onUpdateCurrentDate(prev[2]);
+    //                         // setSelectedDay((prev) => addMonths(prev, 1));
+    //                         return [prev[1], prev[2], addMonths(prev[2], 1)];
+    //                     });
+    //                 } else {
+    //                     setItems((prev) => {
+    //                         console.log([
+    //                             prev[1],
+    //                             prev[2],
+    //                             addWeeks(prev[2], 1),
+    //                         ]);
+    //                         // onUpdateCurrentDate(prev[2]);
+    //                         // setSelectedDay((prev) => addWeeks(prev, 1));
+    //                         return [prev[1], prev[2], addWeeks(prev[2], 1)];
+    //                     });
+    //                 }
+
+    //                 horizontalCalendarApi.set({
+    //                     x: -CALENDAR_WIDTH,
+    //                 });
+
+    //                 // setPosition((prev) => ({ ...prev, x: -CALENDAR_WIDTH }));
+    //                 setLastPosition((prev) => ({
+    //                     ...prev,
+    //                     x: -CALENDAR_WIDTH,
+    //                 }));
+    //             }, 700);
+    //             setIsAnimating(false);
+    //         },
+    //     });
+    // };
+
+    // const canceled = () => {
+    //     setIsAnimating(true);
+
+    //     horizontalCalendarApi.start({
+    //         to: {
+    //             x: -CALENDAR_WIDTH,
+    //         },
+    //     });
+    // };
+
+    // const prev = () => {
+    //     setIsAnimating(true);
+
+    //     horizontalCalendarApi.start({
+    //         to: {
+    //             x: 0,
+    //         },
+    //         onRest: () => {
+    //             setTimeout(() => {
+    //                 if (isOpened) {
+    //                     setItems((prev) => {
+    //                         // onUpdateCurrentDate(prev[0]);
+    //                         setSelectedDay((prev) => subMonths(prev, 1));
+    //                         return [subMonths(prev[0], 1), prev[0], prev[1]];
+    //                     });
+    //                 } else {
+    //                     setItems((prev) => {
+    //                         // onUpdateCurrentDate(prev[0]);
+    //                         setSelectedDay((prev) => subWeeks(prev, 1));
+    //                         return [subWeeks(prev[0], 1), prev[0], prev[1]];
+    //                     });
+    //                 }
+
+    //                 horizontalCalendarApi.set({
+    //                     x: -CALENDAR_WIDTH,
+    //                 });
+
+    //                 // setPosition((prev) => ({ ...prev, x: -CALENDAR_WIDTH }));
+    //                 setLastPosition((prev) => ({
+    //                     ...prev,
+    //                     x: -CALENDAR_WIDTH,
+    //                 }));
+    //             }, 700);
+    //             setIsAnimating(false);
+    //         },
+    //     });
+    // };
+
+    // const handleCarouselPointerDown = (e: PointerEvent<HTMLDivElement>) => {
+    //     setPointerStart({ x: e.clientX, y: e.clientY });
+    // };
+
+    // const handleCarouselPointerMove = (e: PointerEvent<HTMLDivElement>) => {
+    //     const deltaX = lastPosition.x + e.clientX - pointerStart.x;
+
+    //     horizontalCalendarApi.set({
+    //         x: deltaX,
+    //     });
+    //     // setPosition((prev) => ({ ...prev, x: deltaX }));
+    // };
+
+    // const handleCarouselPointerUp = (e: PointerEvent<HTMLDivElement>) => {
+    //     const deltaX = e.clientX - pointerStart.x;
+    //     setLastPosition((prev) => ({ ...prev, x: horizontalCalendar.x.get() }));
+    //     // horizontalCalendarApi.set({
+    //     //     x: position.x,
+    //     // });
+
+    //     if (deltaX >= 100) {
+    //         prev();
+    //         setLastPosition((prev) => ({ ...prev, x: 0 }));
+    //         // setPosition((prev) => ({ ...prev, x: 0 }));
+    //         horizontalCalendarApi.set({
+    //             x: 0,
+    //         });
+    //     } else if (deltaX <= -100) {
+    //         next();
+    //         setLastPosition((prev) => ({
+    //             ...prev,
+    //             x: -CALENDAR_WIDTH * 2,
+    //         }));
+    //         // setPosition((prev) => ({ ...prev, x: -CALENDAR_WIDTH * 2 }));
+    //         horizontalCalendarApi.set({
+    //             x: -CALENDAR_WIDTH * 2,
+    //         });
+    //     } else {
+    //         canceled();
+    //         setLastPosition((prev) => ({
+    //             ...prev,
+    //             x: -CALENDAR_WIDTH,
+    //         }));
+    //         // setPosition((prev) => ({ ...prev, x: -CALENDAR_WIDTH }));
+    //         horizontalCalendarApi.set({
+    //             x: -CALENDAR_WIDTH,
+    //         });
+    //     }
+    // };
 
     return (
         <div
@@ -370,69 +494,72 @@ export function MonthCalendar({
             <DaysOfWeek />
             <animated.div
                 style={{
-                    transform: springY.to((y) =>
-                        isAnimating
-                            ? `translate3d(0, ${y}px, 0)`
-                            : `translate3d(0, ${posY * ratioY}px, 0)`,
+                    transform: verticalCalendar.y.to(
+                        (y) => `translate3d(0, ${y * ratioY}px, 0)`,
+                        // isAnimating
+                        //     ? `translate3d(0, ${y}px, 0)`
+                        //     : `translate3d(0, ${position.y * ratioY}px, 0)`,
                     ),
-                    // transform: springY.to((y) => `translate3d(0, ${y}px, 0)`),
                     touchAction: "none",
                 }}
             >
                 <div className="grid h-[280px] grid-cols-[30px_1fr]">
                     <Weeks
-                        isOpened={isOpened || isTransitioning}
+                        isOpened={isOpened || isTransitioning || isAnimating}
                         currentDate={currentDate}
                     />
-                    <Carousel
-                        opts={{ startIndex: 1, watchResize: false }}
-                        setApi={setCarouselApi}
+                    <div
+                        className="carousel-content-wrapper"
+                        // onPointerDown={handleCarouselPointerDown}
+                        // onPointerMove={handleCarouselPointerMove}
+                        // onPointerUp={handleCarouselPointerUp}
                     >
-                        <CarouselContent>
+                        <animated.div
+                            className="carousel-content"
+                            style={{
+                                translate: horizontalCalendar.x.to(
+                                    (x) => `${x}px`,
+                                ),
+                            }}
+                        >
                             {items.map((item, index) => (
-                                <CarouselItem key={index}>
-                                    <div className="grid grid-cols-7 gap-x-1 gap-y-5">
-                                        {datesInMonth(item).map((day) => (
-                                            <div
-                                                className={cn(
-                                                    {
-                                                        "rounded-full border":
-                                                            isSameDay(
-                                                                day,
-                                                                selectedDay,
-                                                            ),
-                                                        "text-blue-500":
-                                                            isToday(day),
-                                                        "text-gray-400":
-                                                            !isSameMonth(
-                                                                item,
-                                                                day,
-                                                            ),
-                                                    },
-                                                    "flex size-10 items-center justify-center justify-self-center text-lg",
-                                                )}
-                                                key={day.toString()}
-                                                onClick={() =>
-                                                    dayClickHandle(day)
-                                                }
-                                            >
-                                                {format(day, "d")}
-                                            </div>
-                                        ))}
-                                    </div>
-                                </CarouselItem>
+                                <div
+                                    key={index}
+                                    className="grid grid-cols-7 gap-x-1 gap-y-5"
+                                >
+                                    {datesInMonth(item).map((day) => (
+                                        <div
+                                            className={cn(
+                                                {
+                                                    "rounded-full border":
+                                                        isSameDay(
+                                                            day,
+                                                            currentDate,
+                                                        ),
+                                                    "text-blue-500":
+                                                        isToday(day),
+                                                    "text-gray-400":
+                                                        !isSameMonth(item, day),
+                                                },
+                                                "flex size-10 items-center justify-center justify-self-center text-lg",
+                                            )}
+                                            key={day.toString()}
+                                            onClick={() => dayClickHandle(day)}
+                                        >
+                                            {format(day, "d")}
+                                        </div>
+                                    ))}
+                                </div>
                             ))}
-                        </CarouselContent>
-                    </Carousel>
+                        </animated.div>
+                    </div>
                 </div>
             </animated.div>
             <animated.div
                 className="h-60 bg-white text-yellow-500"
                 style={{
-                    transform: bottomY.to((y) =>
-                        isAnimating
-                            ? `translate3d(0, ${y}px, 0)`
-                            : `translate3d(0, ${posY}px, 0)`,
+                    transform: verticalBottomBlock.y.to(
+                        (y) => `translate3d(0, ${y}px, 0)`,
                     ),
                     touchAction: "none",
                 }}
