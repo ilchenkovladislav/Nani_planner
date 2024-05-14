@@ -18,6 +18,7 @@ import { DaysOfWeek } from "../DaysOfWeek/DaysOfWeek";
 import { animated, useSpring } from "@react-spring/web";
 import { Weeks } from "../Weeks/Weeks";
 import "./MonthCalendar.css";
+import { CalendarCarousel } from "../CalendarCarousel/CalendarCarousel";
 
 type MonthCalendarProps = {
     currentDate: Date;
@@ -27,7 +28,6 @@ type MonthCalendarProps = {
 const GAP = 20;
 const ROW_HEIGHT = 40;
 const HEIGHT_FOUR_WEEKS = GAP * 4 + ROW_HEIGHT * 4;
-const CALENDAR_WIDTH = 400;
 
 export function MonthCalendar({
     currentDate,
@@ -47,7 +47,6 @@ export function MonthCalendar({
     const [isAnimating, setIsAnimating] = useState(false);
     const [pointerStart, setPointerStart] = useState({ x: 0, y: 0 });
     const [lastPosition, setLastPosition] = useState({
-        x: -CALENDAR_WIDTH,
         y: 0,
     });
 
@@ -59,10 +58,6 @@ export function MonthCalendar({
 
     const [verticalBottomBlock, verticalBottomBlockApi] = useSpring(() => ({
         y: 0,
-    }));
-
-    const [horizontalCalendar, horizontalCalendarApi] = useSpring(() => ({
-        from: { x: -CALENDAR_WIDTH },
     }));
 
     const datesInMonth = (date: Date) =>
@@ -307,127 +302,31 @@ export function MonthCalendar({
     }
 
     const next = () => {
-        setIsAnimating(true);
-
-        horizontalCalendarApi.start({
-            to: {
-                x: -CALENDAR_WIDTH * 2,
-            },
-            onResolve: () => {
-                setTimeout(() => {
-                    if (isOpened) {
-                        setItems((prev) => {
-                            onUpdateCurrentDate(prev[2]);
-                            return [prev[1], prev[2], addMonths(prev[2], 1)];
-                        });
-                    } else {
-                        setItems((prev) => {
-                            onUpdateCurrentDate(prev[2]);
-                            return [prev[1], prev[2], addWeeks(prev[2], 1)];
-                        });
-                    }
-
-                    horizontalCalendarApi.set({
-                        x: -CALENDAR_WIDTH,
-                    });
-
-                    setLastPosition((prev) => ({
-                        ...prev,
-                        x: -CALENDAR_WIDTH,
-                    }));
-                }, 0);
-                setIsAnimating(false);
-            },
-        });
-    };
-
-    const canceled = () => {
-        setIsAnimating(true);
-
-        horizontalCalendarApi.start({
-            to: {
-                x: -CALENDAR_WIDTH,
-            },
-            onResolve: () => {
-                setIsAnimating(false);
-            },
-        });
+        if (isOpened) {
+            setItems((prev) => {
+                onUpdateCurrentDate(prev[2]);
+                return [prev[1], prev[2], addMonths(prev[2], 1)];
+            });
+        } else {
+            setItems((prev) => {
+                onUpdateCurrentDate(prev[2]);
+                return [prev[1], prev[2], addWeeks(prev[2], 1)];
+            });
+        }
     };
 
     const prev = () => {
-        setIsAnimating(true);
-
-        horizontalCalendarApi.start({
-            to: {
-                x: 0,
-            },
-            onResolve: () => {
-                setTimeout(() => {
-                    if (isOpened) {
-                        setItems((prev) => {
-                            onUpdateCurrentDate(prev[0]);
-                            return [subMonths(prev[0], 1), prev[0], prev[1]];
-                        });
-                    } else {
-                        setItems((prev) => {
-                            onUpdateCurrentDate(prev[0]);
-                            return [subWeeks(prev[0], 1), prev[0], prev[1]];
-                        });
-                    }
-
-                    horizontalCalendarApi.set({
-                        x: -CALENDAR_WIDTH,
-                    });
-
-                    setLastPosition((prev) => ({
-                        ...prev,
-                        x: -CALENDAR_WIDTH,
-                    }));
-                }, 0);
-                setIsAnimating(false);
-            },
-        });
-    };
-
-    const handleCarouselPointerDown = (e: PointerEvent<HTMLDivElement>) => {
-        setPointerStart({ x: e.clientX, y: e.clientY });
-    };
-
-    const handleCarouselPointerMove = (e: PointerEvent<HTMLDivElement>) => {
-        if (allowedDirection === "vertical") return;
-        verticalCalendarApi.set({ y: 0 });
-
-        const deltaX = lastPosition.x + e.clientX - pointerStart.x;
-
-        horizontalCalendarApi.set({
-            x: deltaX,
-        });
-    };
-
-    const handleCarouselPointerUp = (e: PointerEvent<HTMLDivElement>) => {
-        if (allowedDirection === "vertical") return;
-
-        const deltaX = e.clientX - pointerStart.x;
-        setLastPosition((prev) => ({ ...prev, x: horizontalCalendar.x.get() }));
-
-        if (deltaX >= 100) {
-            prev();
-            setLastPosition((prev) => ({ ...prev, x: 0 }));
-        } else if (deltaX <= -100) {
-            next();
-            setLastPosition((prev) => ({
-                ...prev,
-                x: -CALENDAR_WIDTH * 2,
-            }));
+        if (isOpened) {
+            setItems((prev) => {
+                onUpdateCurrentDate(prev[0]);
+                return [subMonths(prev[0], 1), prev[0], prev[1]];
+            });
         } else {
-            canceled();
-            setLastPosition((prev) => ({
-                ...prev,
-                x: -CALENDAR_WIDTH,
-            }));
+            setItems((prev) => {
+                onUpdateCurrentDate(prev[0]);
+                return [subWeeks(prev[0], 1), prev[0], prev[1]];
+            });
         }
-
-        setIsTransitioning(false);
     };
 
     return (
@@ -460,51 +359,35 @@ export function MonthCalendar({
                         }
                         currentDate={currentDate}
                     />
-                    <div
-                        className="carousel-content-wrapper"
-                        onPointerDown={handleCarouselPointerDown}
-                        onPointerMove={handleCarouselPointerMove}
-                        onPointerUp={handleCarouselPointerUp}
-                    >
-                        <animated.div
-                            className="carousel-content"
-                            style={{
-                                translate: horizontalCalendar.x.to(
-                                    (x) => `${x}px`,
-                                ),
-                            }}
-                        >
-                            {items.map((item, index) => (
-                                <div
-                                    key={index}
-                                    className="grid grid-cols-7 gap-x-1 gap-y-5"
-                                >
-                                    {datesInMonth(item).map((day) => (
-                                        <div
-                                            className={cn(
-                                                {
-                                                    "rounded-full border":
-                                                        isSameDay(
-                                                            day,
-                                                            currentDate,
-                                                        ),
-                                                    "text-blue-500":
-                                                        isToday(day),
-                                                    "text-gray-400":
-                                                        !isSameMonth(item, day),
-                                                },
-                                                "flex size-10 items-center justify-center justify-self-center text-lg",
-                                            )}
-                                            key={day.toString()}
-                                            onClick={() => dayClickHandle(day)}
-                                        >
-                                            {format(day, "d")}
-                                        </div>
-                                    ))}
-                                </div>
-                            ))}
-                        </animated.div>
-                    </div>
+                    <CalendarCarousel onNext={next} onPrev={prev}>
+                        {items.map((item, index) => (
+                            <div
+                                key={index}
+                                className="grid grid-cols-7 gap-x-1 gap-y-5"
+                            >
+                                {datesInMonth(item).map((day) => (
+                                    <div
+                                        className={cn(
+                                            {
+                                                "rounded-full border":
+                                                    isSameDay(day, currentDate),
+                                                "text-blue-500": isToday(day),
+                                                "text-gray-400": !isSameMonth(
+                                                    item,
+                                                    day,
+                                                ),
+                                            },
+                                            "flex size-10 items-center justify-center justify-self-center text-lg",
+                                        )}
+                                        key={day.toString()}
+                                        onClick={() => dayClickHandle(day)}
+                                    >
+                                        {format(day, "d")}
+                                    </div>
+                                ))}
+                            </div>
+                        ))}
+                    </CalendarCarousel>
                 </div>
             </animated.div>
             <animated.div
