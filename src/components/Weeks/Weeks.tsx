@@ -4,11 +4,11 @@ import { getISOWeek } from "date-fns";
 
 type WeeksProps = {
     currentDate: Date;
-    isOpened: boolean;
+    isMonthView: boolean;
 };
 
-export const Weeks = ({ currentDate, isOpened }: WeeksProps) => {
-    const ISOWeeks = isOpened
+export const Weeks = ({ currentDate, isMonthView }: WeeksProps) => {
+    const ISOWeeks = isMonthView
         ? getISOWeeksOfMonth(currentDate)
         : [getISOWeek(currentDate)];
 

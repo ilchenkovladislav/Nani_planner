@@ -56,14 +56,28 @@ export function MonthCalendar({
         y: 0,
     }));
 
+    function shouldShowMonthView() {
+        // === При открытом календаре ===
+        if (isOpened) {
+            return true;
+        }
+
+        // === При закрытом календаре ===
+        if (isAnimating && allowedDirection === "vertical") {
+            return true;
+        }
+
+        if (isTransitioning && allowedDirection === "vertical") {
+            return true;
+        }
+
+        return false;
+    }
+
     const datesInMonth = (date: Date) =>
-        allowedDirection !== "vertical" && !isOpened
-            ? getWeekDates(date)
-            : isOpened ||
-                (isTransitioning && allowedDirection !== "horizontal") ||
-                (isAnimating && allowedDirection === "vertical")
-              ? getDaysInMonthWithISOWeeks(date)
-              : getWeekDates(date);
+        shouldShowMonthView()
+            ? getDaysInMonthWithISOWeeks(date)
+            : getWeekDates(date);
 
     function setWeeklyItems() {
         const getWeeklyItems = (currentDate: Date): Date[] => [
@@ -356,17 +370,7 @@ export function MonthCalendar({
             >
                 <div className="grid h-[280px] grid-cols-[30px_1fr]">
                     <Weeks
-                        isOpened={
-                            allowedDirection !== "vertical" && !isOpened
-                                ? false
-                                : isOpened ||
-                                    (isTransitioning &&
-                                        allowedDirection !== "horizontal") ||
-                                    (isAnimating &&
-                                        allowedDirection === "vertical")
-                                  ? true
-                                  : false
-                        }
+                        isMonthView={shouldShowMonthView()}
                         currentDate={currentDate}
                     />
                     <CalendarCarousel
