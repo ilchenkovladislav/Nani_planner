@@ -1,5 +1,6 @@
 import { useState, type PointerEvent } from "react";
 import { animated, useSpring } from "@react-spring/web";
+import { CarouselContext } from "./context";
 
 type CalendarCarouselProps = {
     children: React.ReactNode;
@@ -15,28 +16,27 @@ export function CalendarCarousel({
     onPrev,
 }: CalendarCarouselProps) {
     const [horizontalCalendar, horizontalCalendarApi] = useSpring(() => ({
-        from: { x: -CALENDAR_WIDTH },
+        x: -CALENDAR_WIDTH,
     }));
 
     const [pointerStart, setPointerStart] = useState({ x: 0, y: 0 });
-    const [lastPosition, setLastPosition] = useState({
-        x: -CALENDAR_WIDTH,
-    });
 
     const [allowedDirection, setAllowedDirection] = useState<
         "horizontal" | "vertical" | null
     >(null);
 
-    const next = () => {
+    const next = (cb: () => void) => {
         horizontalCalendarApi.start({
             to: {
                 x: -CALENDAR_WIDTH * 2,
             },
             onResolve: () => {
                 setTimeout(() => {
-                    onNext();
-                    centeringCarousel();
+                    cb();
                 }, 0);
+                setTimeout(() => {
+                    centeringCarousel();
+                }, 1);
             },
         });
     };
@@ -46,25 +46,21 @@ export function CalendarCarousel({
             to: {
                 x: -CALENDAR_WIDTH,
             },
-            onResolve: () => {
-                setLastPosition((prev) => ({
-                    ...prev,
-                    x: -CALENDAR_WIDTH,
-                }));
-            },
         });
     };
 
-    const prev = () => {
+    const prev = (cb: () => void) => {
         horizontalCalendarApi.start({
             to: {
                 x: 0,
             },
             onResolve: () => {
                 setTimeout(() => {
-                    onPrev();
-                    centeringCarousel();
+                    cb();
                 }, 0);
+                setTimeout(() => {
+                    centeringCarousel();
+                }, 1);
             },
         });
     };
@@ -73,11 +69,6 @@ export function CalendarCarousel({
         horizontalCalendarApi.set({
             x: -CALENDAR_WIDTH,
         });
-
-        setLastPosition((prev) => ({
-            ...prev,
-            x: -CALENDAR_WIDTH,
-        }));
     }
 
     const handleCarouselPointerDown = (e: PointerEvent<HTMLDivElement>) => {
@@ -101,7 +92,7 @@ export function CalendarCarousel({
             return;
         }
 
-        const deltaX = lastPosition.x + e.clientX - pointerStart.x;
+        const deltaX = -CALENDAR_WIDTH + e.clientX - pointerStart.x;
 
         horizontalCalendarApi.set({
             x: deltaX,
@@ -112,32 +103,33 @@ export function CalendarCarousel({
         if (allowedDirection === "vertical") return;
 
         const deltaX = e.clientX - pointerStart.x;
-        setLastPosition((prev) => ({ ...prev, x: horizontalCalendar.x.get() }));
 
         if (deltaX >= 100) {
-            prev();
+            prev(onPrev);
         } else if (deltaX <= -100) {
-            next();
+            next(onNext);
         } else {
             canceled();
         }
     };
 
     return (
-        <div
-            className="carousel-content-wrapper"
-            onPointerDown={handleCarouselPointerDown}
-            onPointerMove={handleCarouselPointerMove}
-            onPointerUp={handleCarouselPointerUp}
-        >
-            <animated.div
-                className="carousel-content"
-                style={{
-                    translate: horizontalCalendar.x.to((x) => `${x}px`),
-                }}
+        <CarouselContext.Provider value={{ next, prev }}>
+            <div
+                className="carousel-content-wrapper"
+                onPointerDown={handleCarouselPointerDown}
+                onPointerMove={handleCarouselPointerMove}
+                onPointerUp={handleCarouselPointerUp}
             >
-                {children}
-            </animated.div>
-        </div>
+                <animated.div
+                    className="carousel-content"
+                    style={{
+                        translate: horizontalCalendar.x.to((x) => `${x}px`),
+                    }}
+                >
+                    {children}
+                </animated.div>
+            </div>
+        </CarouselContext.Provider>
     );
 }

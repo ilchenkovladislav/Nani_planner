@@ -1,10 +1,6 @@
 import { useState, type PointerEvent } from "react";
 
 import {
-    isToday,
-    format,
-    isSameDay,
-    isSameMonth,
     subMonths,
     addMonths,
     subWeeks,
@@ -12,13 +8,13 @@ import {
     getWeekOfMonth,
 } from "date-fns";
 
-import cn from "classnames";
 import { getDaysInMonthWithISOWeeks, getWeekDates } from "@/lib/calendarUtils";
 import { DaysOfWeek } from "../DaysOfWeek/DaysOfWeek";
 import { animated, useSpring } from "@react-spring/web";
 import { Weeks } from "../Weeks/Weeks";
 import "./MonthCalendar.css";
 import { CalendarCarousel } from "../CalendarCarousel/CalendarCarousel";
+import { CalendarDay } from "../CalendarDay/CalendarDay";
 
 type MonthCalendarProps = {
     currentDate: Date;
@@ -227,10 +223,6 @@ export function MonthCalendar({
         }
     }
 
-    function dayClickHandle(day: Date) {
-        onUpdateCurrentDate(day);
-    }
-
     function handlePointerDown(e: PointerEvent<HTMLDivElement>) {
         setPointerStart({ x: e.clientX, y: e.clientY });
         setIsTransitioning(true);
@@ -301,33 +293,53 @@ export function MonthCalendar({
         setIsTransitioning(false);
     }
 
-    const next = () => {
+    const setNextDates = () => {
         if (isOpened) {
             setItems((prev) => {
-                onUpdateCurrentDate(prev[2]);
                 return [prev[1], prev[2], addMonths(prev[2], 1)];
             });
         } else {
             setItems((prev) => {
-                onUpdateCurrentDate(prev[2]);
                 return [prev[1], prev[2], addWeeks(prev[2], 1)];
             });
         }
     };
 
-    const prev = () => {
+    function handleNextSlide() {
+        setNextDates();
+
+        if (isOpened) {
+            onUpdateCurrentDate(addMonths(currentDate, 1));
+        } else {
+            onUpdateCurrentDate(addWeeks(currentDate, 1));
+        }
+    }
+
+    const setPrevDates = () => {
         if (isOpened) {
             setItems((prev) => {
-                onUpdateCurrentDate(prev[0]);
                 return [subMonths(prev[0], 1), prev[0], prev[1]];
             });
         } else {
             setItems((prev) => {
-                onUpdateCurrentDate(prev[0]);
                 return [subWeeks(prev[0], 1), prev[0], prev[1]];
             });
         }
     };
+
+    function handlePrevSlide() {
+        setPrevDates();
+
+        if (isOpened) {
+            onUpdateCurrentDate(subMonths(currentDate, 1));
+        } else {
+            onUpdateCurrentDate(subWeeks(currentDate, 1));
+        }
+    }
+
+    function handleDayClick(day: Date) {
+        onUpdateCurrentDate(day);
+    }
 
     return (
         <div
@@ -359,31 +371,25 @@ export function MonthCalendar({
                         }
                         currentDate={currentDate}
                     />
-                    <CalendarCarousel onNext={next} onPrev={prev}>
+                    <CalendarCarousel
+                        onNext={handleNextSlide}
+                        onPrev={handlePrevSlide}
+                    >
                         {items.map((item, index) => (
                             <div
                                 key={index}
                                 className="grid grid-cols-7 gap-x-1 gap-y-5"
                             >
                                 {datesInMonth(item).map((day) => (
-                                    <div
-                                        className={cn(
-                                            {
-                                                "rounded-full border":
-                                                    isSameDay(day, currentDate),
-                                                "text-blue-500": isToday(day),
-                                                "text-gray-400": !isSameMonth(
-                                                    item,
-                                                    day,
-                                                ),
-                                            },
-                                            "flex size-10 items-center justify-center justify-self-center text-lg",
-                                        )}
+                                    <CalendarDay
                                         key={day.toString()}
-                                        onClick={() => dayClickHandle(day)}
-                                    >
-                                        {format(day, "d")}
-                                    </div>
+                                        isOpened={isOpened}
+                                        onDayClick={handleDayClick}
+                                        day={day}
+                                        currentDate={currentDate}
+                                        setPrevDates={setPrevDates}
+                                        setNextDates={setNextDates}
+                                    />
                                 ))}
                             </div>
                         ))}
