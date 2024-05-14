@@ -1,4 +1,4 @@
-import { useEffect, useState, type PointerEvent } from "react";
+import { useState, type PointerEvent } from "react";
 
 import {
     isToday,
@@ -36,6 +36,7 @@ export function MonthCalendar({
     const NUMBER_ROWS = getWeekOfMonth(currentDate, { weekStartsOn: 1 }) - 1;
     const HEIGHT_UP_SELECTED_WEEK =
         GAP * NUMBER_ROWS + ROW_HEIGHT * NUMBER_ROWS;
+    const ratioY = HEIGHT_UP_SELECTED_WEEK / HEIGHT_FOUR_WEEKS;
 
     const prevMonth = subMonths(currentDate, 1);
     const nextMonth = addMonths(currentDate, 1);
@@ -72,13 +73,6 @@ export function MonthCalendar({
                 (isAnimating && allowedDirection === "vertical")
               ? getDaysInMonthWithISOWeeks(date)
               : getWeekDates(date);
-
-    const [ratioY, setRatioY] = useState(
-        HEIGHT_UP_SELECTED_WEEK / HEIGHT_FOUR_WEEKS,
-    );
-    useEffect(() => {
-        setRatioY(HEIGHT_UP_SELECTED_WEEK / HEIGHT_FOUR_WEEKS);
-    }, [currentDate]);
 
     function setWeeklyItems() {
         const getWeeklyItems = (currentDate: Date): Date[] => [
