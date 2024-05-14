@@ -115,11 +115,11 @@ export function MonthCalendar({
                         y: -HEIGHT_FOUR_WEEKS,
                     },
                     onResolve: () => {
-                        setWeeklyItems();
                         setIsAnimating(false);
                         setIsOpened(false);
                         setTimeout(() => {
                             verticalCalendarApi.set({ y: 0 });
+                            setWeeklyItems();
                         }, 0);
                     },
                 });
@@ -132,11 +132,11 @@ export function MonthCalendar({
                         y: -HEIGHT_FOUR_WEEKS,
                     },
                     onResolve: () => {
-                        setWeeklyItems();
                         setIsAnimating(false);
                         setTimeout(() => {
-                            verticalCalendarApi.set({ y: 0 });
+                            setWeeklyItems();
                             setIsOpened(false);
+                            verticalCalendarApi.set({ y: 0 });
                         }, 0);
                     },
                 });
@@ -230,24 +230,21 @@ export function MonthCalendar({
     }
 
     function handlePointerMove(e: PointerEvent<HTMLDivElement>) {
-        if (allowedDirection === "horizontal") return;
-
-        const deltaY = lastPosition.y + e.clientY - pointerStart.y;
-
-        verticalCalendarApi.set({ y: deltaY });
-
         if (allowedDirection === null) {
             if (
                 Math.abs(e.clientX - pointerStart.x) >
                 Math.abs(e.clientY - pointerStart.y)
             ) {
                 setAllowedDirection("horizontal");
+                return;
             } else {
                 setAllowedDirection("vertical");
             }
-
-            return;
         }
+
+        if (allowedDirection === "horizontal") return;
+
+        const deltaY = lastPosition.y + e.clientY - pointerStart.y;
 
         if (deltaY <= -240) {
             verticalCalendarApi.set({ y: -240 });
@@ -259,6 +256,7 @@ export function MonthCalendar({
             return;
         }
 
+        verticalCalendarApi.set({ y: deltaY });
         verticalBottomBlockApi.set({ y: deltaY });
     }
 
