@@ -33,8 +33,6 @@ export function MonthCalendar({
     currentDate,
     onUpdateCurrentDate,
 }: MonthCalendarProps) {
-    // const [selectedDay, setSelectedDay] = useState<Date>(new Date());
-
     const NUMBER_ROWS = getWeekOfMonth(currentDate, { weekStartsOn: 1 }) - 1;
     const HEIGHT_UP_SELECTED_WEEK =
         GAP * NUMBER_ROWS + ROW_HEIGHT * NUMBER_ROWS;
@@ -46,7 +44,6 @@ export function MonthCalendar({
     const [isOpened, setIsOpened] = useState(true);
     const [isTransitioning, setIsTransitioning] = useState(false);
     const [isAnimating, setIsAnimating] = useState(false);
-    // const [position, setPosition] = useState({ x: -CALENDAR_WIDTH, y: 0 });
     const [pointerStart, setPointerStart] = useState({ x: 0, y: 0 });
     const [lastPosition, setLastPosition] = useState({
         x: -CALENDAR_WIDTH,
@@ -66,9 +63,6 @@ export function MonthCalendar({
     const [horizontalCalendar, horizontalCalendarApi] = useSpring(() => ({
         from: { x: -CALENDAR_WIDTH },
     }));
-
-    // const datesInMonth = (date: Date) =>
-    //     isOpened ? getDaysInMonthWithISOWeeks(date) : getWeekDates(date);
 
     const datesInMonth = (date: Date) =>
         allowedDirection !== "vertical" && !isOpened
@@ -141,7 +135,6 @@ export function MonthCalendar({
                         setIsOpened(false);
                         setTimeout(() => {
                             verticalCalendarApi.set({ y: 0 });
-                            // setPosition((prev) => ({ ...prev, y: 0 }));
                         }, 0);
                     },
                 });
@@ -246,24 +239,18 @@ export function MonthCalendar({
     }
 
     function dayClickHandle(day: Date) {
-        // setSelectedDay(day);
         onUpdateCurrentDate(day);
     }
 
     function handlePointerDown(e: PointerEvent<HTMLDivElement>) {
         setPointerStart({ x: e.clientX, y: e.clientY });
-
-        // if (!isOpened) {
-        // verticalCalendarApi.set({ y: -HEIGHT_FOUR_WEEKS + 2 });
-        // }
         setIsTransitioning(true);
         setAllowedDirection(null);
     }
 
     function handlePointerMove(e: PointerEvent<HTMLDivElement>) {
-        console.log("move");
-
         if (allowedDirection === "horizontal") return;
+
         const deltaY = lastPosition.y + e.clientY - pointerStart.y;
 
         verticalCalendarApi.set({ y: deltaY });
@@ -282,36 +269,22 @@ export function MonthCalendar({
         }
 
         if (deltaY <= -240) {
-            // setPosition((prev) => ({ ...prev, y: -240 }));
-
             verticalCalendarApi.set({ y: -240 });
-            // verticalCalendarApi.set({ y: -HEIGHT_UP_SELECTED_WEEK });
             return;
         }
 
         if (deltaY >= 0) {
-            // setPosition((prev) => ({ ...prev, y: 0 }));
             verticalCalendarApi.set({ y: 0 });
             return;
         }
 
         verticalBottomBlockApi.set({ y: deltaY });
-
-        // setPosition((prev) => ({ ...prev, y: deltaY }));
     }
 
     function handlePointerUp(e: PointerEvent<HTMLDivElement>) {
         if (!allowedDirection || allowedDirection === "horizontal") return;
 
         const deltaY = lastPosition.y + e.clientY - pointerStart.y;
-        // setLastPosition((prev) => ({ ...prev, y: verticalCalendar.y.get() }));
-        // verticalCalendarApi.set((y) => ({
-        //     y: y * ratioY,
-        // }));
-
-        // verticalBottomBlockApi.set({
-        //     y: verticalCalendar.y.get(),
-        // });
 
         if (pointerStart.y - e.clientY >= 0) {
             if (deltaY <= -50) {
@@ -320,28 +293,20 @@ export function MonthCalendar({
                     ...prev,
                     y: -HEIGHT_FOUR_WEEKS,
                 }));
-                // setPosition((prev) => ({ ...prev, y: -240 }));
-                // verticalCalendarApi.set({ y: -240 });
             } else {
                 openCalendar();
                 setLastPosition((prev) => ({ ...prev, y: 0 }));
-                // setPosition((prev) => ({ ...prev, y: 0 }));
-                // verticalCalendarApi.set({ y: 0 });
             }
         } else {
             if (deltaY >= -240 + 50) {
                 openCalendar();
                 setLastPosition((prev) => ({ ...prev, y: 0 }));
-                // setPosition((prev) => ({ ...prev, y: 0 }));
-                // verticalCalendarApi.set({ y: 0 });
             } else {
                 closeCalendar();
                 setLastPosition((prev) => ({
                     ...prev,
                     y: -HEIGHT_FOUR_WEEKS,
                 }));
-                // setPosition((prev) => ({ ...prev, y: -240 }));
-                // verticalCalendarApi.set({ y: -240 });
             }
         }
         setIsTransitioning(false);
@@ -359,13 +324,11 @@ export function MonthCalendar({
                     if (isOpened) {
                         setItems((prev) => {
                             onUpdateCurrentDate(prev[2]);
-                            // setSelectedDay((prev) => addMonths(prev, 1));
                             return [prev[1], prev[2], addMonths(prev[2], 1)];
                         });
                     } else {
                         setItems((prev) => {
                             onUpdateCurrentDate(prev[2]);
-                            // setSelectedDay((prev) => addWeeks(prev, 1));
                             return [prev[1], prev[2], addWeeks(prev[2], 1)];
                         });
                     }
@@ -374,7 +337,6 @@ export function MonthCalendar({
                         x: -CALENDAR_WIDTH,
                     });
 
-                    // setPosition((prev) => ({ ...prev, x: -CALENDAR_WIDTH }));
                     setLastPosition((prev) => ({
                         ...prev,
                         x: -CALENDAR_WIDTH,
@@ -410,13 +372,11 @@ export function MonthCalendar({
                     if (isOpened) {
                         setItems((prev) => {
                             onUpdateCurrentDate(prev[0]);
-                            // setSelectedDay((prev) => subMonths(prev, 1));
                             return [subMonths(prev[0], 1), prev[0], prev[1]];
                         });
                     } else {
                         setItems((prev) => {
                             onUpdateCurrentDate(prev[0]);
-                            // setSelectedDay((prev) => subWeeks(prev, 1));
                             return [subWeeks(prev[0], 1), prev[0], prev[1]];
                         });
                     }
@@ -425,7 +385,6 @@ export function MonthCalendar({
                         x: -CALENDAR_WIDTH,
                     });
 
-                    // setPosition((prev) => ({ ...prev, x: -CALENDAR_WIDTH }));
                     setLastPosition((prev) => ({
                         ...prev,
                         x: -CALENDAR_WIDTH,
@@ -449,7 +408,6 @@ export function MonthCalendar({
         horizontalCalendarApi.set({
             x: deltaX,
         });
-        // setPosition((prev) => ({ ...prev, x: deltaX }));
     };
 
     const handleCarouselPointerUp = (e: PointerEvent<HTMLDivElement>) => {
@@ -457,37 +415,22 @@ export function MonthCalendar({
 
         const deltaX = e.clientX - pointerStart.x;
         setLastPosition((prev) => ({ ...prev, x: horizontalCalendar.x.get() }));
-        // horizontalCalendarApi.set({
-        //     x: position.x,
-        // });
 
         if (deltaX >= 100) {
             prev();
             setLastPosition((prev) => ({ ...prev, x: 0 }));
-            // setPosition((prev) => ({ ...prev, x: 0 }));
-            // horizontalCalendarApi.set({
-            //     x: 0,
-            // });
         } else if (deltaX <= -100) {
             next();
             setLastPosition((prev) => ({
                 ...prev,
                 x: -CALENDAR_WIDTH * 2,
             }));
-            // setPosition((prev) => ({ ...prev, x: -CALENDAR_WIDTH * 2 }));
-            // horizontalCalendarApi.set({
-            //     x: -CALENDAR_WIDTH * 2,
-            // });
         } else {
             canceled();
             setLastPosition((prev) => ({
                 ...prev,
                 x: -CALENDAR_WIDTH,
             }));
-            // setPosition((prev) => ({ ...prev, x: -CALENDAR_WIDTH }));
-            // horizontalCalendarApi.set({
-            //     x: -CALENDAR_WIDTH,
-            // });
         }
 
         setIsTransitioning(false);
@@ -504,16 +447,12 @@ export function MonthCalendar({
                 style={{
                     transform: verticalCalendar.y.to(
                         (y) => `translate3d(0, ${y * ratioY}px, 0)`,
-                        // isAnimating
-                        //     ? `translate3d(0, ${y}px, 0)`
-                        //     : `translate3d(0, ${position.y * ratioY}px, 0)`,
                     ),
                     touchAction: "none",
                 }}
             >
                 <div className="grid h-[280px] grid-cols-[30px_1fr]">
                     <Weeks
-                        // isOpened={isOpened}
                         isOpened={
                             allowedDirection !== "vertical" && !isOpened
                                 ? false
@@ -525,12 +464,6 @@ export function MonthCalendar({
                                   ? true
                                   : false
                         }
-                        // isOpened={
-                        //     isOpened ||
-                        //     (isTransitioning &&
-                        //         allowedDirection !== "horizontal") ||
-                        //     (isAnimating && allowedDirection === "vertical")
-                        // }
                         currentDate={currentDate}
                     />
                     <div
