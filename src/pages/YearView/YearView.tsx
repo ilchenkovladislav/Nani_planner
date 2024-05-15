@@ -39,12 +39,14 @@ export function YearView() {
     }));
 
     useEffect(() => {
-        api.start({
-            to: {
-                scale: 1,
-                willChange: "transform",
-            },
-        });
+        setTimeout(() => {
+            api.start({
+                to: {
+                    scale: 1,
+                    willChange: "transform",
+                },
+            });
+        }, 100);
     }, []);
 
     function handleNextSlide() {
