@@ -7,10 +7,10 @@ import { indexRoute } from "@/routes/routes";
 
 export function MonthView() {
     const { year, month } = indexRoute.useParams();
-    const date = new Date();
-    date.setFullYear(Number(year));
-    date.setMonth(Number(month));
-    const [currentDate, setCurrentDate] = useState<Date>(date);
+
+    const [currentDate, setCurrentDate] = useState<Date>(
+        new Date(Number(year), Number(month)),
+    );
 
     function updateCurrentDate(month: Date) {
         setCurrentDate(month);
