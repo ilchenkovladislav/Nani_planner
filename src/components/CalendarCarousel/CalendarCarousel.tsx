@@ -4,8 +4,9 @@ import { CarouselContext } from "./context";
 
 type CalendarCarouselProps = {
     children: React.ReactNode;
-    onNext: () => void;
-    onPrev: () => void;
+    onNext?: () => void;
+    onPrev?: () => void;
+    widthContent?: number;
 };
 
 const CALENDAR_WIDTH = 400;
@@ -14,9 +15,10 @@ export function CalendarCarousel({
     children,
     onNext,
     onPrev,
+    widthContent = CALENDAR_WIDTH,
 }: CalendarCarouselProps) {
     const [horizontalCalendar, horizontalCalendarApi] = useSpring(() => ({
-        x: -CALENDAR_WIDTH,
+        x: -widthContent,
     }));
 
     const [pointerStart, setPointerStart] = useState({ x: 0, y: 0 });
@@ -25,15 +27,17 @@ export function CalendarCarousel({
         "horizontal" | "vertical" | null
     >(null);
 
-    const next = (cb: () => void) => {
+    const next = (cb?: () => void) => {
         horizontalCalendarApi.start({
             to: {
-                x: -CALENDAR_WIDTH * 2,
+                x: -widthContent * 2,
             },
             onResolve: () => {
-                setTimeout(() => {
-                    cb();
-                }, 0);
+                if (cb) {
+                    setTimeout(() => {
+                        cb();
+                    }, 0);
+                }
                 setTimeout(() => {
                     centeringCarousel();
                 }, 1);
@@ -44,20 +48,22 @@ export function CalendarCarousel({
     const canceled = () => {
         horizontalCalendarApi.start({
             to: {
-                x: -CALENDAR_WIDTH,
+                x: -widthContent,
             },
         });
     };
 
-    const prev = (cb: () => void) => {
+    const prev = (cb?: () => void) => {
         horizontalCalendarApi.start({
             to: {
                 x: 0,
             },
             onResolve: () => {
-                setTimeout(() => {
-                    cb();
-                }, 0);
+                if (cb) {
+                    setTimeout(() => {
+                        cb();
+                    }, 0);
+                }
                 setTimeout(() => {
                     centeringCarousel();
                 }, 1);
@@ -67,7 +73,7 @@ export function CalendarCarousel({
 
     function centeringCarousel() {
         horizontalCalendarApi.set({
-            x: -CALENDAR_WIDTH,
+            x: -widthContent,
         });
     }
 
@@ -87,12 +93,11 @@ export function CalendarCarousel({
                 setAllowedDirection("horizontal");
             } else {
                 setAllowedDirection("vertical");
+                return;
             }
-
-            return;
         }
 
-        const deltaX = -CALENDAR_WIDTH + e.clientX - pointerStart.x;
+        const deltaX = -widthContent + e.clientX - pointerStart.x;
 
         horizontalCalendarApi.set({
             x: deltaX,
@@ -125,6 +130,7 @@ export function CalendarCarousel({
                     className="carousel-content"
                     style={{
                         translate: horizontalCalendar.x.to((x) => `${x}px`),
+                        touchAction: "none",
                     }}
                 >
                     {children}

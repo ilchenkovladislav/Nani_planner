@@ -20,7 +20,11 @@ export function YearView() {
     }
 
     return (
-        <CalendarCarousel onNext={handleNextSlide} onPrev={handlePrevSlide}>
+        <CalendarCarousel
+            onNext={handleNextSlide}
+            onPrev={handlePrevSlide}
+            widthContent={430}
+        >
             {items.map((year) => (
                 <Calendar key={year} year={year} showDaysOfWeek />
             ))}
