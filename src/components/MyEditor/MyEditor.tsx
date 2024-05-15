@@ -12,7 +12,7 @@ import { createPortal } from "react-dom";
 
 export function MyEditor() {
     const editor = useEditor({
-        extensions: [Document, Paragraph, Text, StarterKit, TaskList, TaskItem],
+        extensions: [StarterKit, TaskList, TaskItem],
         content: "",
     });
 
