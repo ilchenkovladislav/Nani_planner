@@ -32,7 +32,7 @@ export function YearView() {
 
     const [styles, api] = useSpring(() => ({
         from: {
-            scale: 3,
+            transform: "scale(3)",
             transformOrigin: variants[Number(month)],
             willChange: "transform",
         },
@@ -42,9 +42,10 @@ export function YearView() {
         setTimeout(() => {
             api.start({
                 to: {
-                    scale: 1,
+                    transform: "scale(1)",
                     willChange: "transform",
                 },
+                loop: true,
             });
         }, 100);
     }, []);
