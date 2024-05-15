@@ -1,3 +1,4 @@
+import { cn } from "@/lib/utils";
 import {
     getISOWeek,
     isSameMonth,
@@ -7,6 +8,7 @@ import {
     endOfMonth,
     startOfISOWeek,
     startOfMonth,
+    isToday,
 } from "date-fns";
 
 function getWeeks(year: number, month: number): number[] {
@@ -47,7 +49,17 @@ export function DayList(props: DayListProps) {
 
                         const day = format(date, "d");
 
-                        return <div key={date.toString()}>{day}</div>;
+                        return (
+                            <div
+                                key={date.toString()}
+                                className={cn({
+                                    "rounded-full bg-blue-100 font-bold text-blue-500":
+                                        isToday(date),
+                                })}
+                            >
+                                {day}
+                            </div>
+                        );
                     })}
                 </div>
                 <div className="grid items-center justify-center gap-1 gap-y-2 text-[10px] text-gray-400">
