@@ -21,7 +21,7 @@ export function MonthView() {
             <Link
                 to="/year/$year"
                 params={{ year: `${currentDate.getFullYear()}` }}
-                className="relative z-10 bg-white"
+                className="relative z-10 block bg-white"
             >
                 <div>{format(currentDate, "yyyy LLLL", { locale: ru })}</div>
             </Link>
