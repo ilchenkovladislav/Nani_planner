@@ -1,0 +1,22 @@
+.carousel-content-wrapper {
+    overflow: hidden;
+}
+
+.carousel-content {
+    display: flex;
+    align-items: start;
+    /* transition: all 500ms ease-out; */
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+
+.carousel-content::-webkit-scrollbar,
+.carousel-content::-webkit-scrollbar {
+    display: none;
+}
+
+.carousel-content > * {
+    width: 100%;
+    flex-shrink: 0;
+    flex-grow: 1;
+}
