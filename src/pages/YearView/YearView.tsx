@@ -32,11 +32,14 @@ export function YearView() {
 
     const [styles] = useSpring(() => ({
         from: {
-            transform: "scale(2)",
+            transform: "scale(10)",
             transformOrigin: variants[Number(month)],
             willChange: "transform",
         },
-        to: { transform: "scale(1)", willChange: "transform" },
+        to: {
+            transform: "scale(1)",
+            willChange: "transform",
+        },
     }));
 
     function handleNextSlide() {
