@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Calendar } from "./Calendar/Calendar";
 import { CalendarCarousel } from "@/components/CalendarCarousel/CalendarCarousel";
 import { yearRoute } from "@/routes/routes";
@@ -30,18 +30,22 @@ export function YearView() {
         Number(year) + 1,
     ]);
 
-    const [styles] = useSpring(() => ({
+    const [styles, api] = useSpring(() => ({
         from: {
-            transform: "scale(3)",
+            scale: 3,
             transformOrigin: variants[Number(month)],
             willChange: "transform",
         },
-        to: {
-            transform: "scale(1)",
-            willChange: "transform",
-        },
-        loop: true,
     }));
+
+    useEffect(() => {
+        api.start({
+            to: {
+                scale: 1,
+                willChange: "transform",
+            },
+        });
+    }, []);
 
     function handleNextSlide() {
         setItems(items.map((year) => year + 1));
