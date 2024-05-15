@@ -1,28 +1,14 @@
-import { useState } from "react";
-import { format } from "date-fns";
-import { ru } from "date-fns/locale";
-import { MonthCalendar } from "./components/MonthCalendar/MonthCalendar";
+import { RouterProvider } from "@tanstack/react-router";
+import { router } from "@/routes/routes";
+
+declare module "@tanstack/react-router" {
+    interface Register {
+        router: typeof router;
+    }
+}
 
 function App() {
-    const [currentDate, setCurrentDate] = useState<Date>(new Date());
-
-    function updateCurrentDate(month: Date) {
-        setCurrentDate(month);
-    }
-
-    return (
-        <>
-            <div className="relative z-10 bg-white">
-                <div>{format(currentDate, "yyyy LLLL", { locale: ru })}</div>
-            </div>
-            {
-                <MonthCalendar
-                    currentDate={currentDate}
-                    onUpdateCurrentDate={updateCurrentDate}
-                />
-            }
-        </>
-    );
+    return <RouterProvider router={router} />;
 }
 
 export default App;
