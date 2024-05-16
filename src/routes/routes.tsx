@@ -4,7 +4,6 @@ import {
     createRoute,
     createRootRoute,
 } from "@tanstack/react-router";
-import { TanStackRouterDevtools } from "@tanstack/router-devtools";
 import { MonthView } from "@/pages/MonthView/MonthView";
 import { YearView } from "@/pages/YearView/YearView";
 
@@ -12,7 +11,6 @@ const rootRoute = createRootRoute({
     component: () => (
         <>
             <Outlet />
-            <TanStackRouterDevtools />
         </>
     ),
 });
