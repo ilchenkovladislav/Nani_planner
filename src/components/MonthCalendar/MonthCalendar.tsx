@@ -400,7 +400,7 @@ export function MonthCalendar({
                 </div>
             </animated.div>
             <animated.div
-                className="h-60 bg-white p-10"
+                className="h-60 border-t bg-background"
                 style={{
                     transform: verticalBottomBlock.y.to(
                         (y) => `translate3d(0, ${y}px, 0)`,
