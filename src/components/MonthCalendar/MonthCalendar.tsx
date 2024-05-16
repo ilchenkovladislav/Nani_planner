@@ -15,6 +15,7 @@ import { Weeks } from "../Weeks/Weeks";
 import "./MonthCalendar.css";
 import { CalendarCarousel } from "../CalendarCarousel/CalendarCarousel";
 import { CalendarDay } from "../CalendarDay/CalendarDay";
+import { MyEditor } from "@/components/MyEditor/MyEditor";
 
 type MonthCalendarProps = {
     currentDate: Date;
@@ -399,14 +400,16 @@ export function MonthCalendar({
                 </div>
             </animated.div>
             <animated.div
-                className="h-60 bg-white text-yellow-500"
+                className="h-60 border-t bg-background"
                 style={{
                     transform: verticalBottomBlock.y.to(
                         (y) => `translate3d(0, ${y}px, 0)`,
                     ),
                     touchAction: "none",
                 }}
-            />
+            >
+                <MyEditor onFocused={closeCalendar} />
+            </animated.div>
         </div>
     );
 }
