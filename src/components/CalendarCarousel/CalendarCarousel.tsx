@@ -93,6 +93,8 @@ export function CalendarCarousel({
                 setAllowedDirection("vertical");
                 return;
             }
+
+            e.preventDefault();
         }
 
         const deltaX = -CALENDAR_WIDTH + (e.clientX - pointerStart.x) / 5;

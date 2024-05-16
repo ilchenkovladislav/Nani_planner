@@ -255,6 +255,8 @@ export function MonthCalendar({
             } else {
                 setAllowedDirection("vertical");
             }
+
+            e.preventDefault();
         }
 
         if (allowedDirection === "horizontal") return;
