@@ -14,8 +14,13 @@ import { animated, useSpring } from "@react-spring/web";
 import { IoCheckboxOutline } from "react-icons/io5";
 import { FiBold } from "react-icons/fi";
 import { FiItalic } from "react-icons/fi";
+import { useEffect } from "react";
 
-export function MyEditor() {
+type MyEditorProps = {
+    onFocused: () => void;
+};
+
+export function MyEditor({ onFocused }) {
     const editor = useEditor({
         extensions: [
             Document,
@@ -30,6 +35,12 @@ export function MyEditor() {
     });
 
     const styles = useSpring({ opacity: editor?.isFocused ? 1 : 0 });
+
+    useEffect(() => {
+        if (editor?.isFocused) {
+            onFocused();
+        }
+    }, [editor?.isFocused]);
 
     if (!editor) {
         return null;

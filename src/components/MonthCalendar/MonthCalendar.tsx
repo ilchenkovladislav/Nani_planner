@@ -408,7 +408,7 @@ export function MonthCalendar({
                     touchAction: "none",
                 }}
             >
-                <MyEditor />
+                <MyEditor onFocused={closeCalendar} />
             </animated.div>
         </div>
     );
