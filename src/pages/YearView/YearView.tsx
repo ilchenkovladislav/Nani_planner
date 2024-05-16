@@ -45,11 +45,7 @@ export function YearView() {
 
     return (
         <animated.div style={styles}>
-            <CalendarCarousel
-                onNext={handleNextSlide}
-                onPrev={handlePrevSlide}
-                widthContent={430}
-            >
+            <CalendarCarousel onNext={handleNextSlide} onPrev={handlePrevSlide}>
                 {items.map((year) => (
                     <Calendar key={year} year={year} showDaysOfWeek />
                 ))}

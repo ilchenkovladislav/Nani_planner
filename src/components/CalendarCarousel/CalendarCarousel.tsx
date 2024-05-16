@@ -6,19 +6,17 @@ type CalendarCarouselProps = {
     children: React.ReactNode;
     onNext?: () => void;
     onPrev?: () => void;
-    widthContent?: number;
 };
 
-const CALENDAR_WIDTH = 400;
+const CALENDAR_WIDTH = 100;
 
 export function CalendarCarousel({
     children,
     onNext,
     onPrev,
-    widthContent = CALENDAR_WIDTH,
 }: CalendarCarouselProps) {
     const [horizontalCalendar, horizontalCalendarApi] = useSpring(() => ({
-        x: -widthContent,
+        x: -CALENDAR_WIDTH,
     }));
 
     const [pointerStart, setPointerStart] = useState({ x: 0, y: 0 });
@@ -30,7 +28,7 @@ export function CalendarCarousel({
     const next = (cb?: () => void) => {
         horizontalCalendarApi.start({
             to: {
-                x: -widthContent * 2,
+                x: -CALENDAR_WIDTH * 2,
             },
             onResolve: () => {
                 if (cb) {
@@ -48,7 +46,7 @@ export function CalendarCarousel({
     const canceled = () => {
         horizontalCalendarApi.start({
             to: {
-                x: -widthContent,
+                x: -CALENDAR_WIDTH,
             },
         });
     };
@@ -73,7 +71,7 @@ export function CalendarCarousel({
 
     function centeringCarousel() {
         horizontalCalendarApi.set({
-            x: -widthContent,
+            x: -CALENDAR_WIDTH,
         });
     }
 
@@ -97,7 +95,7 @@ export function CalendarCarousel({
             }
         }
 
-        const deltaX = -widthContent + e.clientX - pointerStart.x;
+        const deltaX = -CALENDAR_WIDTH + (e.clientX - pointerStart.x) / 5;
 
         horizontalCalendarApi.set({
             x: deltaX,
@@ -129,7 +127,7 @@ export function CalendarCarousel({
                 <animated.div
                     className="carousel-content"
                     style={{
-                        translate: horizontalCalendar.x.to((x) => `${x}px`),
+                        translate: horizontalCalendar.x.to((x) => `${x}%`),
                         touchAction: "none",
                     }}
                 >
