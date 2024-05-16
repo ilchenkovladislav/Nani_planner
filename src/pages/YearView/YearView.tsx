@@ -1,9 +1,11 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Calendar } from "./Calendar/Calendar";
 import { CalendarCarousel } from "@/components/CalendarCarousel/CalendarCarousel";
 import { yearRoute } from "@/routes/routes";
 import { useSpring, animated } from "@react-spring/web";
 import { useSearch } from "@tanstack/react-router";
+import brunette from "@/anime-girls-brunette.jpg";
+import anime from "@/anime-devushka-28.jpg";
 
 const variants = [
     "top left",
@@ -36,19 +38,12 @@ export function YearView() {
             transformOrigin: variants[Number(month)],
             willChange: "transform",
         },
+        to: {
+            transform: "scale(1)",
+            transformOrigin: variants[Number(month)],
+            willChange: "transform",
+        },
     }));
-
-    useEffect(() => {
-        setTimeout(() => {
-            api.start({
-                to: {
-                    transform: "scale(1)",
-                    willChange: "transform",
-                },
-                loop: true,
-            });
-        }, 100);
-    }, []);
 
     function handleNextSlide() {
         setItems(items.map((year) => year + 1));
@@ -65,9 +60,11 @@ export function YearView() {
                 onPrev={handlePrevSlide}
                 widthContent={430}
             >
-                {items.map((year) => (
-                    <Calendar key={year} year={year} showDaysOfWeek />
-                ))}
+                {/* {items.map((year) => ( */}
+                <img src={anime} alt="" />
+                <Calendar key={year} year={year} showDaysOfWeek />
+                <img src={brunette} alt="" />
+                {/* ))} */}
             </CalendarCarousel>
         </animated.div>
     );
