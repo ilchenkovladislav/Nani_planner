@@ -47,10 +47,6 @@ export function MonthCalendar({
         y: 0,
     });
 
-    const [allowedDirection, setAllowedDirection] = useState<
-        "horizontal" | "vertical" | null
-    >(null);
-
     const [verticalCalendar, verticalCalendarApi] = useSpring(() => ({ y: 0 }));
 
     const [verticalBottomBlock, verticalBottomBlockApi] = useSpring(() => ({
@@ -64,14 +60,13 @@ export function MonthCalendar({
         }
 
         // === При закрытом календаре ===
-        if (isAnimating && allowedDirection === "vertical") {
+        if (isAnimating) {
             return true;
         }
 
-        if (isTransitioning && allowedDirection === "vertical") {
+        if (isTransitioning) {
             return true;
         }
-
         return false;
     }
 
@@ -241,26 +236,9 @@ export function MonthCalendar({
     function handlePointerDown(e: PointerEvent<HTMLDivElement>) {
         setPointerStart({ x: e.clientX, y: e.clientY });
         setIsTransitioning(true);
-        setAllowedDirection(null);
     }
 
     function handlePointerMove(e: PointerEvent<HTMLDivElement>) {
-        if (allowedDirection === null) {
-            if (
-                Math.abs(e.clientX - pointerStart.x) >
-                Math.abs(e.clientY - pointerStart.y)
-            ) {
-                setAllowedDirection("horizontal");
-                return;
-            } else {
-                setAllowedDirection("vertical");
-            }
-
-            e.preventDefault();
-        }
-
-        if (allowedDirection === "horizontal") return;
-
         const deltaY = lastPosition.y + e.clientY - pointerStart.y;
 
         if (deltaY <= -240) {
@@ -278,8 +256,6 @@ export function MonthCalendar({
     }
 
     function handlePointerUp(e: PointerEvent<HTMLDivElement>) {
-        if (!allowedDirection || allowedDirection === "horizontal") return;
-
         const deltaY = lastPosition.y + e.clientY - pointerStart.y;
 
         if (pointerStart.y - e.clientY >= 0) {
@@ -357,11 +333,7 @@ export function MonthCalendar({
     }
 
     return (
-        <div
-            onPointerDown={handlePointerDown}
-            onPointerMove={handlePointerMove}
-            onPointerUp={handlePointerUp}
-        >
+        <div>
             <DaysOfWeek />
             <animated.div
                 style={{
@@ -409,6 +381,9 @@ export function MonthCalendar({
                     ),
                     touchAction: "none",
                 }}
+                onPointerDown={handlePointerDown}
+                onPointerMove={handlePointerMove}
+                onPointerUp={handlePointerUp}
             >
                 <MyEditor onFocused={closeCalendar} />
             </animated.div>

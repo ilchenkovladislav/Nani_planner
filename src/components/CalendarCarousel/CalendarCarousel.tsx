@@ -21,10 +21,6 @@ export function CalendarCarousel({
 
     const [pointerStart, setPointerStart] = useState({ x: 0, y: 0 });
 
-    const [allowedDirection, setAllowedDirection] = useState<
-        "horizontal" | "vertical" | null
-    >(null);
-
     const next = (cb?: () => void) => {
         horizontalCalendarApi.start({
             to: {
@@ -77,26 +73,9 @@ export function CalendarCarousel({
 
     const handleCarouselPointerDown = (e: PointerEvent<HTMLDivElement>) => {
         setPointerStart({ x: e.clientX, y: e.clientY });
-        setAllowedDirection(null);
     };
 
     const handleCarouselPointerMove = (e: PointerEvent<HTMLDivElement>) => {
-        if (allowedDirection === "vertical") return;
-
-        if (allowedDirection === null) {
-            if (
-                Math.abs(e.clientX - pointerStart.x) >
-                Math.abs(e.clientY - pointerStart.y)
-            ) {
-                setAllowedDirection("horizontal");
-            } else {
-                setAllowedDirection("vertical");
-                return;
-            }
-
-            e.preventDefault();
-        }
-
         const deltaX = -CALENDAR_WIDTH + (e.clientX - pointerStart.x) / 5;
 
         horizontalCalendarApi.set({
@@ -105,8 +84,6 @@ export function CalendarCarousel({
     };
 
     const handleCarouselPointerUp = (e: PointerEvent<HTMLDivElement>) => {
-        if (allowedDirection === "vertical") return;
-
         const deltaX = e.clientX - pointerStart.x;
 
         if (deltaX >= 100) {
