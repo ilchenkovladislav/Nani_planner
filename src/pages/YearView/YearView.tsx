@@ -4,8 +4,6 @@ import { CalendarCarousel } from "@/components/CalendarCarousel/CalendarCarousel
 import { yearRoute } from "@/routes/routes";
 import { useSpring, animated } from "@react-spring/web";
 import { useSearch } from "@tanstack/react-router";
-import brunette from "@/anime-girls-brunette.jpg";
-import anime from "@/anime-devushka-28.jpg";
 
 const variants = [
     "top left",
@@ -32,18 +30,9 @@ export function YearView() {
         Number(year) + 1,
     ]);
 
-    const [styles, api] = useSpring(() => ({
-        from: {
-            transform: "scale(3)",
-            transformOrigin: variants[Number(month)],
-            willChange: "transform",
-        },
-        to: {
-            transform: "scale(1)",
-            transformOrigin: variants[Number(month)],
-            willChange: "transform",
-        },
-        loop: true,
+    const [styles] = useSpring(() => ({
+        from: { scale: 2, transformOrigin: variants[Number(month)] },
+        to: { scale: 1 },
     }));
 
     function handleNextSlide() {
@@ -61,12 +50,9 @@ export function YearView() {
                 onPrev={handlePrevSlide}
                 widthContent={430}
             >
-                {/* {items.map((year) => ( */}
-                <img src={anime} alt="" />
-                {/* <Calendar key={year} year={year} showDaysOfWeek /> */}
-                <img src={brunette} alt="" />
-                <img src={brunette} alt="" />
-                {/* ))} */}
+                {items.map((year) => (
+                    <Calendar key={year} year={year} showDaysOfWeek />
+                ))}
             </CalendarCarousel>
         </animated.div>
     );

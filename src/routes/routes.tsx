@@ -3,7 +3,6 @@ import {
     createRouter,
     createRoute,
     createRootRoute,
-    Link,
 } from "@tanstack/react-router";
 import { TanStackRouterDevtools } from "@tanstack/router-devtools";
 import { MonthView } from "@/pages/MonthView/MonthView";
@@ -15,11 +14,6 @@ const rootRoute = createRootRoute({
             <Outlet />
             <TanStackRouterDevtools />
         </>
-    ),
-    notFoundComponent: () => (
-        <Link to="/$year/$month" params={{ month: 5, year: 2024 }}>
-            Not found
-        </Link>
     ),
 });
 
