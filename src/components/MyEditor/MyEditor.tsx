@@ -21,7 +21,7 @@ type MyEditorProps = {
     onFocused: () => void;
 };
 
-export function MyEditor({ onFocused }) {
+export function MyEditor({ onFocused }: MyEditorProps) {
     const editor = useEditor({
         extensions: [
             Document,
