@@ -1,6 +1,7 @@
 .tiptap {
-    padding: 20px;
+    padding: 30px;
     outline: none;
+    height: 100%;
 }
 
 ul[data-type="taskList"] {
@@ -39,4 +40,12 @@ ul[data-type="taskList"] {
             height: 20px;
         }
     }
+}
+
+.tiptap .is-editor-empty:first-child::before {
+    color: #adb5bd;
+    content: attr(data-placeholder);
+    float: left;
+    height: 0;
+    pointer-events: none;
 }

@@ -8,6 +8,7 @@ import TaskList from "@tiptap/extension-task-list";
 import Text from "@tiptap/extension-text";
 import Bold from "@tiptap/extension-bold";
 import Italic from "@tiptap/extension-italic";
+import Placeholder from "@tiptap/extension-placeholder";
 import { EditorContent, useEditor } from "@tiptap/react";
 import { createPortal } from "react-dom";
 import { animated, useSpring } from "@react-spring/web";
@@ -30,6 +31,7 @@ export function MyEditor({ onFocused }) {
             Text,
             TaskList,
             TaskItem,
+            Placeholder.configure({ placeholder: "Начните ввод" }),
         ],
         content: "",
     });
@@ -48,6 +50,8 @@ export function MyEditor({ onFocused }) {
 
     return (
         <>
+            <EditorContent className="h-full" editor={editor} />
+
             {createPortal(
                 <animated.div
                     style={styles}
@@ -94,8 +98,6 @@ export function MyEditor({ onFocused }) {
                 </animated.div>,
                 document.querySelector("#root")!,
             )}
-
-            <EditorContent className="rounded-md border" editor={editor} />
         </>
     );
 }
