@@ -22,8 +22,7 @@ const variants = [
 ];
 
 export function MonthView() {
-    const { year = new Date().getFullYear(), month = new Date().getMonth() } =
-        indexRoute.useParams();
+    const { year, month } = indexRoute.useParams();
     const [currentDate, setCurrentDate] = useState<Date>(
         new Date(Number(year), Number(month)),
     );
