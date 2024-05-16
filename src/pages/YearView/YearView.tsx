@@ -43,6 +43,7 @@ export function YearView() {
             transformOrigin: variants[Number(month)],
             willChange: "transform",
         },
+        loop: true,
     }));
 
     function handleNextSlide() {
@@ -62,7 +63,8 @@ export function YearView() {
             >
                 {/* {items.map((year) => ( */}
                 <img src={anime} alt="" />
-                <Calendar key={year} year={year} showDaysOfWeek />
+                {/* <Calendar key={year} year={year} showDaysOfWeek /> */}
+                <img src={brunette} alt="" />
                 <img src={brunette} alt="" />
                 {/* ))} */}
             </CalendarCarousel>
