@@ -17,10 +17,19 @@ import { CalendarCarousel } from "../CalendarCarousel/CalendarCarousel";
 import { CalendarDay } from "../CalendarDay/CalendarDay";
 import { MyEditor } from "@/components/MyEditor/MyEditor";
 import { useCurrentDateStore } from "@/store/currentDate";
+import { db } from "@/db";
+import { useDebouncedCallback } from "use-debounce";
+import { Editor, JSONContent } from "@tiptap/react";
+import { useLiveQuery } from "dexie-react-hooks";
+import { Indicator } from "../Indicator/Indicator";
 
 const GAP = 20;
 const ROW_HEIGHT = 40;
 const HEIGHT_FOUR_WEEKS = GAP * 4 + ROW_HEIGHT * 4;
+
+type onUpdateProps = {
+    editor: Editor;
+};
 
 export function MonthCalendar() {
     const currentDate = useCurrentDateStore((state) => state.currentDate);
@@ -49,6 +58,9 @@ export function MonthCalendar() {
     const [verticalBottomBlock, verticalBottomBlockApi] = useSpring(() => ({
         y: 0,
     }));
+
+    const [editorContent, setEditorContent] = useState<JSONContent | string>();
+    const plans = useLiveQuery(() => db.plans.toArray());
 
     function shouldShowMonthView() {
         // === При открытом календаре ===
@@ -327,6 +339,49 @@ export function MonthCalendar() {
 
     function handleDayClick(day: Date) {
         updateCurrentDate(day);
+        getDayContent(day).then((editorContent) => {
+            setEditorContent(editorContent);
+        });
+    }
+
+    async function getDayContent(date: Date): Promise<JSONContent | string> {
+        try {
+            const data = await db.plans.get(
+                `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`,
+            );
+
+            if (data) {
+                return JSON.parse(data.editorJSON);
+            }
+        } catch (err) {
+            console.error(err);
+        }
+        return "";
+    }
+
+    const debouncedUpdate = useDebouncedCallback(
+        ({ editor }: onUpdateProps) => {
+            const key = `${currentDate.getFullYear()}-${currentDate.getMonth()}-${currentDate.getDate()}`;
+
+            if (editor.getText().trim().length === 0) {
+                db.plans.delete(key);
+                return;
+            }
+
+            db.plans.put({
+                id: key,
+                editorJSON: JSON.stringify(editor.getJSON()),
+            });
+        },
+        1000,
+    );
+
+    function hasPlan(day: Date) {
+        return plans?.find(
+            (plan) =>
+                plan.id ===
+                `${day.getFullYear()}-${day.getMonth()}-${day.getDate()}`,
+        );
     }
 
     return (
@@ -349,21 +404,26 @@ export function MonthCalendar() {
                         onNext={handleNextSlide}
                         onPrev={handlePrevSlide}
                     >
-                        {items.map((item, index) => (
+                        {items.map((item) => (
                             <div
-                                key={index}
+                                key={`${item.toISOString()}`}
                                 className="grid grid-cols-7 gap-x-1 gap-y-5"
                             >
                                 {datesInMonth(item).map((day) => (
-                                    <CalendarDay
+                                    <div
                                         key={day.toString()}
-                                        isOpened={isOpened}
-                                        onDayClick={handleDayClick}
-                                        day={day}
-                                        currentDate={currentDate}
-                                        setPrevDates={setPrevDates}
-                                        setNextDates={setNextDates}
-                                    />
+                                        className="relative flex justify-center"
+                                    >
+                                        {hasPlan(day) && <Indicator />}
+                                        <CalendarDay
+                                            isOpened={isOpened}
+                                            onDayClick={handleDayClick}
+                                            day={day}
+                                            currentDate={currentDate}
+                                            setPrevDates={setPrevDates}
+                                            setNextDates={setNextDates}
+                                        />
+                                    </div>
                                 ))}
                             </div>
                         ))}
@@ -382,7 +442,11 @@ export function MonthCalendar() {
                 onPointerMove={handlePointerMove}
                 onPointerUp={handlePointerUp}
             >
-                <MyEditor onFocus={closeCalendar} />
+                <MyEditor
+                    onFocus={closeCalendar}
+                    onUpdate={debouncedUpdate}
+                    content={editorContent}
+                />
             </animated.div>
         </div>
     );
