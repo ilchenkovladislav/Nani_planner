@@ -385,7 +385,7 @@ export function MonthCalendar({
                 onPointerMove={handlePointerMove}
                 onPointerUp={handlePointerUp}
             >
-                <MyEditor onFocused={closeCalendar} />
+                <MyEditor onFocus={closeCalendar} />
             </animated.div>
         </div>
     );

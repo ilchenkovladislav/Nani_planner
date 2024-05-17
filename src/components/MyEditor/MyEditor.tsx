@@ -9,19 +9,38 @@ import Text from "@tiptap/extension-text";
 import Bold from "@tiptap/extension-bold";
 import Italic from "@tiptap/extension-italic";
 import Placeholder from "@tiptap/extension-placeholder";
-import { EditorContent, useEditor } from "@tiptap/react";
+import { Editor, EditorContent, useEditor } from "@tiptap/react";
 import { createPortal } from "react-dom";
 import { animated, useSpring } from "@react-spring/web";
 import { IoCheckboxOutline } from "react-icons/io5";
 import { FiBold } from "react-icons/fi";
 import { FiItalic } from "react-icons/fi";
-import { useEffect } from "react";
+import { db } from "@/db";
+import { useDebouncedCallback } from "use-debounce";
 
 type MyEditorProps = {
-    onFocused: () => void;
+    onFocus: () => void;
 };
 
-export function MyEditor({ onFocused }: MyEditorProps) {
+type onUpdateProps = {
+    editor: Editor;
+};
+
+export function MyEditor({ onFocus }: MyEditorProps) {
+    const debouncedUpdate = useDebouncedCallback(
+        ({ editor }: onUpdateProps) => {
+            if (editor.getText().trim().length === 0) {
+                db.plans.delete("2024-02-01");
+            }
+
+            db.plans.put({
+                id: "2024-01-01",
+                editorJSON: JSON.stringify(editor.getJSON()),
+            });
+        },
+        1000,
+    );
+
     const editor = useEditor({
         extensions: [
             Document,
@@ -34,15 +53,11 @@ export function MyEditor({ onFocused }: MyEditorProps) {
             Placeholder.configure({ placeholder: "Начните ввод" }),
         ],
         content: "",
+        onFocus,
+        onUpdate: debouncedUpdate,
     });
 
     const styles = useSpring({ opacity: editor?.isFocused ? 1 : 0 });
-
-    useEffect(() => {
-        if (editor?.isFocused) {
-            onFocused();
-        }
-    }, [editor?.isFocused]);
 
     if (!editor) {
         return null;
