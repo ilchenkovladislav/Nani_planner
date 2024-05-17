@@ -16,20 +16,17 @@ import "./MonthCalendar.css";
 import { CalendarCarousel } from "../CalendarCarousel/CalendarCarousel";
 import { CalendarDay } from "../CalendarDay/CalendarDay";
 import { MyEditor } from "@/components/MyEditor/MyEditor";
-
-type MonthCalendarProps = {
-    currentDate: Date;
-    onUpdateCurrentDate: (month: Date) => void;
-};
+import { useCurrentDateStore } from "@/store/currentDate";
 
 const GAP = 20;
 const ROW_HEIGHT = 40;
 const HEIGHT_FOUR_WEEKS = GAP * 4 + ROW_HEIGHT * 4;
 
-export function MonthCalendar({
-    currentDate,
-    onUpdateCurrentDate,
-}: MonthCalendarProps) {
+export function MonthCalendar() {
+    const currentDate = useCurrentDateStore((state) => state.currentDate);
+    const updateCurrentDate = useCurrentDateStore(
+        (state) => state.updateCurrentDate,
+    );
     const NUMBER_ROWS = getWeekOfMonth(currentDate, { weekStartsOn: 1 }) - 1;
     const HEIGHT_UP_SELECTED_WEEK =
         GAP * NUMBER_ROWS + ROW_HEIGHT * NUMBER_ROWS;
@@ -300,9 +297,9 @@ export function MonthCalendar({
         setNextDates();
 
         if (isOpened) {
-            onUpdateCurrentDate(addMonths(currentDate, 1));
+            updateCurrentDate(addMonths(currentDate, 1));
         } else {
-            onUpdateCurrentDate(addWeeks(currentDate, 1));
+            updateCurrentDate(addWeeks(currentDate, 1));
         }
     }
 
@@ -322,14 +319,14 @@ export function MonthCalendar({
         setPrevDates();
 
         if (isOpened) {
-            onUpdateCurrentDate(subMonths(currentDate, 1));
+            updateCurrentDate(subMonths(currentDate, 1));
         } else {
-            onUpdateCurrentDate(subWeeks(currentDate, 1));
+            updateCurrentDate(subWeeks(currentDate, 1));
         }
     }
 
     function handleDayClick(day: Date) {
-        onUpdateCurrentDate(day);
+        updateCurrentDate(day);
     }
 
     return (

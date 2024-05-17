@@ -17,13 +17,13 @@ const rootRoute = createRootRoute({
 
 export const indexRoute = createRoute({
     getParentRoute: () => rootRoute,
-    path: "/$year/$month",
+    path: "/monthView",
     component: MonthView,
 });
 
 export const yearRoute = createRoute({
     getParentRoute: () => rootRoute,
-    path: "/year/$year",
+    path: "/yearView",
     component: YearView,
 });
 

@@ -1,10 +1,9 @@
-import { useState } from "react";
 import { format } from "date-fns";
 import { ru } from "date-fns/locale";
 import { MonthCalendar } from "@/components/MonthCalendar/MonthCalendar";
 import { Link } from "@tanstack/react-router";
-import { indexRoute } from "@/routes/routes";
 import { useSpring, animated } from "@react-spring/web";
+import { useCurrentDateStore } from "@/store/currentDate";
 
 const variants = [
     "top left",
@@ -22,25 +21,17 @@ const variants = [
 ];
 
 export function MonthView() {
-    const { year, month } = indexRoute.useParams();
-    const [currentDate, setCurrentDate] = useState<Date>(
-        new Date(Number(year), Number(month)),
-    );
+    const currentDate = useCurrentDateStore((state) => state.currentDate);
 
     const [styles] = useSpring(() => ({
-        from: { scale: 0, transformOrigin: variants[Number(month)] },
+        from: { scale: 0, transformOrigin: variants[currentDate.getMonth()] },
         to: { scale: 1 },
     }));
-
-    function updateCurrentDate(month: Date) {
-        setCurrentDate(month);
-    }
 
     return (
         <>
             <Link
-                to="/year/$year"
-                params={{ year: `${currentDate.getFullYear()}` }}
+                to="/yearView"
                 search={{ month: `${currentDate.getMonth()}` }}
                 className="relative z-10 block bg-white"
             >
@@ -48,10 +39,7 @@ export function MonthView() {
             </Link>
 
             <animated.div style={styles}>
-                <MonthCalendar
-                    currentDate={currentDate}
-                    onUpdateCurrentDate={updateCurrentDate}
-                />
+                <MonthCalendar />
             </animated.div>
         </>
     );

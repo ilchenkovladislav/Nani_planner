@@ -1,9 +1,8 @@
 import { useState } from "react";
 import { Calendar } from "./Calendar/Calendar";
 import { CalendarCarousel } from "@/components/CalendarCarousel/CalendarCarousel";
-import { yearRoute } from "@/routes/routes";
 import { useSpring, animated } from "@react-spring/web";
-import { useSearch } from "@tanstack/react-router";
+import { useCurrentDateStore } from "@/store/currentDate";
 
 const variants = [
     "top left",
@@ -21,17 +20,15 @@ const variants = [
 ];
 
 export function YearView() {
-    const { year } = yearRoute.useParams();
-    const { month } = useSearch({ strict: false });
-
+    const currentDate = useCurrentDateStore((state) => state.currentDate);
     const [items, setItems] = useState([
-        Number(year) - 1,
-        Number(year),
-        Number(year) + 1,
+        currentDate.getFullYear() - 1,
+        currentDate.getFullYear(),
+        currentDate.getFullYear() + 1,
     ]);
 
     const [styles] = useSpring(() => ({
-        from: { scale: 2, transformOrigin: variants[Number(month)] },
+        from: { scale: 2, transformOrigin: variants[currentDate.getMonth()] },
         to: { scale: 1 },
     }));
 
