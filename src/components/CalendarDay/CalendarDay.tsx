@@ -55,7 +55,7 @@ export function CalendarDay({
                     "text-blue-500": isToday(day),
                     "text-gray-400": isOpened && !isSameMonth(currentDate, day),
                 },
-                "flex size-10 items-center justify-center justify-self-center text-lg",
+                "flex size-10 items-center justify-center text-lg",
             )}
             onClick={() => dayClickHandle(day)}
         >

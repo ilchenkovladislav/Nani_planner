@@ -9,40 +9,38 @@ import Text from "@tiptap/extension-text";
 import Bold from "@tiptap/extension-bold";
 import Italic from "@tiptap/extension-italic";
 import Placeholder from "@tiptap/extension-placeholder";
-import { EditorContent, useEditor } from "@tiptap/react";
+import { EditorContent, JSONContent, useEditor } from "@tiptap/react";
 import { createPortal } from "react-dom";
 import { animated, useSpring } from "@react-spring/web";
 import { IoCheckboxOutline } from "react-icons/io5";
 import { FiBold } from "react-icons/fi";
 import { FiItalic } from "react-icons/fi";
-import { useEffect } from "react";
 
 type MyEditorProps = {
-    onFocused: () => void;
+    onUpdate: () => void;
+    content?: JSONContent | string;
 };
 
-export function MyEditor({ onFocused }: MyEditorProps) {
-    const editor = useEditor({
-        extensions: [
-            Document,
-            Paragraph,
-            Bold,
-            Italic,
-            Text,
-            TaskList,
-            TaskItem,
-            Placeholder.configure({ placeholder: "Начните ввод" }),
-        ],
-        content: "",
-    });
+export function MyEditor({ onUpdate, content }: MyEditorProps) {
+    const editor = useEditor(
+        {
+            extensions: [
+                Document,
+                Paragraph,
+                Bold,
+                Italic,
+                Text,
+                TaskList,
+                TaskItem,
+                Placeholder.configure({ placeholder: "Начните ввод" }),
+            ],
+            content: content ?? "",
+            onUpdate,
+        },
+        [content],
+    );
 
     const styles = useSpring({ opacity: editor?.isFocused ? 1 : 0 });
-
-    useEffect(() => {
-        if (editor?.isFocused) {
-            onFocused();
-        }
-    }, [editor?.isFocused]);
 
     if (!editor) {
         return null;

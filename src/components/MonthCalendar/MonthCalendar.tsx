@@ -1,4 +1,4 @@
-import { useState, type PointerEvent } from "react";
+import { useEffect, useState, type PointerEvent } from "react";
 
 import {
     subMonths,
@@ -6,6 +6,8 @@ import {
     subWeeks,
     addWeeks,
     getWeekOfMonth,
+    getWeek,
+    format,
 } from "date-fns";
 
 import { getDaysInMonthWithISOWeeks, getWeekDates } from "@/lib/calendarUtils";
@@ -17,10 +19,21 @@ import { CalendarCarousel } from "../CalendarCarousel/CalendarCarousel";
 import { CalendarDay } from "../CalendarDay/CalendarDay";
 import { MyEditor } from "@/components/MyEditor/MyEditor";
 import { useCurrentDateStore } from "@/store/currentDate";
+import { db } from "@/db";
+import { useDebouncedCallback } from "use-debounce";
+import { Editor, JSONContent } from "@tiptap/react";
+import { useLiveQuery } from "dexie-react-hooks";
+import { Indicator } from "../Indicator/Indicator";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ru } from "date-fns/locale";
 
 const GAP = 20;
 const ROW_HEIGHT = 40;
 const HEIGHT_FOUR_WEEKS = GAP * 4 + ROW_HEIGHT * 4;
+
+type onUpdateProps = {
+    editor: Editor;
+};
 
 export function MonthCalendar() {
     const currentDate = useCurrentDateStore((state) => state.currentDate);
@@ -49,6 +62,46 @@ export function MonthCalendar() {
     const [verticalBottomBlock, verticalBottomBlockApi] = useSpring(() => ({
         y: 0,
     }));
+
+    const plans = useLiveQuery(() => db.plans.toArray());
+
+    async function getContent(key: string): Promise<JSONContent | string> {
+        try {
+            const data = plans?.find((plan) => plan.id === key);
+
+            if (data) {
+                return JSON.parse(data.editorJSON);
+            }
+        } catch (err) {
+            console.error(err);
+        }
+        return "";
+    }
+
+    async function getDayContent(): Promise<JSONContent | string> {
+        const key = `${currentDate.getFullYear()}-${currentDate.getMonth()}-${currentDate.getDate()}`;
+        return await getContent(key);
+    }
+
+    async function getWeekContent(): Promise<JSONContent | string> {
+        const key = `${currentDate.getFullYear()}-${getWeek(currentDate)}`;
+        return await getContent(key);
+    }
+
+    async function getMonthContent(): Promise<JSONContent | string> {
+        const key = `${currentDate.getFullYear()}-${currentDate.getMonth()}`;
+        return await getContent(key);
+    }
+
+    const [dayContent, setDayContent] = useState<JSONContent | string>("");
+    const [weekContent, setWeekContent] = useState<JSONContent | string>("");
+    const [monthContent, setMonthContent] = useState<JSONContent | string>("");
+
+    useEffect(() => {
+        getDayContent().then((data) => setDayContent(data));
+        getWeekContent().then((data) => setWeekContent(data));
+        getMonthContent().then((data) => setMonthContent(data));
+    }, [currentDate]);
 
     function shouldShowMonthView() {
         // === При открытом календаре ===
@@ -329,8 +382,52 @@ export function MonthCalendar() {
         updateCurrentDate(day);
     }
 
+    const updatePlan = (key: string, editor: onUpdateProps["editor"]) => {
+        if (editor.getText().trim().length === 0) {
+            db.plans.delete(key);
+            return;
+        }
+
+        db.plans.put({
+            id: key,
+            editorJSON: JSON.stringify(editor.getJSON()),
+        });
+    };
+
+    const debouncedUpdateDay = useDebouncedCallback(
+        ({ editor }: onUpdateProps) => {
+            const key = `${currentDate.getFullYear()}-${currentDate.getMonth()}-${currentDate.getDate()}`;
+            updatePlan(key, editor);
+        },
+        1000,
+    );
+
+    const debouncedUpdateWeek = useDebouncedCallback(
+        ({ editor }: onUpdateProps) => {
+            const key = `${currentDate.getFullYear()}-${getWeek(currentDate)}`;
+            updatePlan(key, editor);
+        },
+        1000,
+    );
+
+    const debouncedUpdateMonth = useDebouncedCallback(
+        ({ editor }: onUpdateProps) => {
+            const key = `${currentDate.getFullYear()}-${currentDate.getMonth()}`;
+            updatePlan(key, editor);
+        },
+        1000,
+    );
+
+    function hasPlan(day: Date) {
+        return plans?.find(
+            (plan) =>
+                plan.id ===
+                `${day.getFullYear()}-${day.getMonth()}-${day.getDate()}`,
+        );
+    }
+
     return (
-        <div>
+        <div className="flex h-full flex-col ">
             <DaysOfWeek />
             <animated.div
                 style={{
@@ -349,21 +446,26 @@ export function MonthCalendar() {
                         onNext={handleNextSlide}
                         onPrev={handlePrevSlide}
                     >
-                        {items.map((item, index) => (
+                        {items.map((item) => (
                             <div
-                                key={index}
+                                key={`${item.toISOString()}`}
                                 className="grid grid-cols-7 gap-x-1 gap-y-5"
                             >
                                 {datesInMonth(item).map((day) => (
-                                    <CalendarDay
+                                    <div
                                         key={day.toString()}
-                                        isOpened={isOpened}
-                                        onDayClick={handleDayClick}
-                                        day={day}
-                                        currentDate={currentDate}
-                                        setPrevDates={setPrevDates}
-                                        setNextDates={setNextDates}
-                                    />
+                                        className="relative flex justify-center"
+                                    >
+                                        {hasPlan(day) && <Indicator />}
+                                        <CalendarDay
+                                            isOpened={isOpened}
+                                            onDayClick={handleDayClick}
+                                            day={day}
+                                            currentDate={currentDate}
+                                            setPrevDates={setPrevDates}
+                                            setNextDates={setNextDates}
+                                        />
+                                    </div>
                                 ))}
                             </div>
                         ))}
@@ -371,7 +473,7 @@ export function MonthCalendar() {
                 </div>
             </animated.div>
             <animated.div
-                className="h-60 border-t bg-background"
+                className="grid h-full border-t bg-background"
                 style={{
                     transform: verticalBottomBlock.y.to(
                         (y) => `translate3d(0, ${y}px, 0)`,
@@ -382,7 +484,39 @@ export function MonthCalendar() {
                 onPointerMove={handlePointerMove}
                 onPointerUp={handlePointerUp}
             >
-                <MyEditor onFocused={closeCalendar} />
+                <Tabs defaultValue="day" className="w-full">
+                    <TabsList className="w-full">
+                        <TabsTrigger value="day">
+                            День{" "}
+                            {format(currentDate, "(d MMMM)", { locale: ru })}
+                        </TabsTrigger>
+                        <TabsTrigger value="week">
+                            Неделя {format(currentDate, "(w)")}
+                        </TabsTrigger>
+                        <TabsTrigger value="month">
+                            Месяц{" "}
+                            {format(currentDate, "(LLLL)", { locale: ru })}
+                        </TabsTrigger>
+                    </TabsList>
+                    <TabsContent value="day">
+                        <MyEditor
+                            onUpdate={debouncedUpdateDay}
+                            content={dayContent}
+                        />
+                    </TabsContent>
+                    <TabsContent value="week">
+                        <MyEditor
+                            onUpdate={debouncedUpdateWeek}
+                            content={weekContent}
+                        />
+                    </TabsContent>
+                    <TabsContent value="month">
+                        <MyEditor
+                            onUpdate={debouncedUpdateMonth}
+                            content={monthContent}
+                        />
+                    </TabsContent>
+                </Tabs>
             </animated.div>
         </div>
     );
