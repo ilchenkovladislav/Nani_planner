@@ -17,12 +17,11 @@ import { FiBold } from "react-icons/fi";
 import { FiItalic } from "react-icons/fi";
 
 type MyEditorProps = {
-    onFocus: () => void;
     onUpdate: () => void;
     content?: JSONContent | string;
 };
 
-export function MyEditor({ onFocus, onUpdate, content }: MyEditorProps) {
+export function MyEditor({ onUpdate, content }: MyEditorProps) {
     const editor = useEditor(
         {
             extensions: [
@@ -36,7 +35,6 @@ export function MyEditor({ onFocus, onUpdate, content }: MyEditorProps) {
                 Placeholder.configure({ placeholder: "Начните ввод" }),
             ],
             content: content ?? "",
-            onFocus,
             onUpdate,
         },
         [content],
