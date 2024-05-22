@@ -31,7 +31,7 @@ export function MonthView() {
 
     return (
         <div className="grid min-h-screen grid-rows-[min-content_1fr]">
-            <div className="flex justify-between">
+            <div className="z-10 flex justify-between bg-background">
                 <Link
                     to="/yearView"
                     search={{ month: `${currentDate.getMonth()}` }}
