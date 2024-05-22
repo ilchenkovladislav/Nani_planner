@@ -6,6 +6,8 @@ import {
 } from "@tanstack/react-router";
 import { MonthView } from "@/pages/MonthView/MonthView";
 import { YearView } from "@/pages/YearView/YearView";
+import { ListView } from "@/pages/ListView/ListView";
+import { ReversedView } from "@/pages/ReversedView/ReversedView";
 
 const rootRoute = createRootRoute({
     component: () => (
@@ -27,6 +29,23 @@ export const yearRoute = createRoute({
     component: YearView,
 });
 
-const routeTree = rootRoute.addChildren([indexRoute, yearRoute]);
+export const listRoute = createRoute({
+    getParentRoute: () => rootRoute,
+    path: "/listView",
+    component: ListView,
+});
+
+export const reversedRoute = createRoute({
+    getParentRoute: () => rootRoute,
+    path: "/reversedView",
+    component: ReversedView,
+});
+
+const routeTree = rootRoute.addChildren([
+    indexRoute,
+    yearRoute,
+    listRoute,
+    reversedRoute,
+]);
 
 export const router = createRouter({ routeTree });

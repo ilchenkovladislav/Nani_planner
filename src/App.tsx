@@ -9,7 +9,7 @@ declare module "@tanstack/react-router" {
 
 function App() {
     return (
-        <div className="grid min-h-screen grid-rows-[min-content_1fr]">
+        <div>
             <RouterProvider router={router} />
         </div>
     );
