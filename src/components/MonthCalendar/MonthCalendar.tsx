@@ -8,6 +8,7 @@ import {
     getWeekOfMonth,
     getWeek,
     format,
+    getWeeksInMonth,
 } from "date-fns";
 
 import { getDaysInMonthWithISOWeeks, getWeekDates } from "@/lib/calendarUtils";
@@ -26,10 +27,9 @@ import { useLiveQuery } from "dexie-react-hooks";
 import { Indicator } from "../Indicator/Indicator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ru } from "date-fns/locale";
+import { cn } from "@/lib/utils";
 
-const GAP = 20;
 const ROW_HEIGHT = 40;
-const HEIGHT_FOUR_WEEKS = GAP * 4 + ROW_HEIGHT * 4;
 
 type onUpdateProps = {
     editor: Editor;
@@ -41,9 +41,13 @@ export function MonthCalendar() {
         (state) => state.updateCurrentDate,
     );
     const NUMBER_ROWS = getWeekOfMonth(currentDate, { weekStartsOn: 1 }) - 1;
-    const HEIGHT_UP_SELECTED_WEEK =
-        GAP * NUMBER_ROWS + ROW_HEIGHT * NUMBER_ROWS;
-    const ratioY = HEIGHT_UP_SELECTED_WEEK / HEIGHT_FOUR_WEEKS;
+    const NUMBER_WEEKS = getWeeksInMonth(currentDate, { weekStartsOn: 1 }) - 1;
+
+    const GAP = NUMBER_WEEKS === 4 ? 20 : 8;
+    const HEIGHT_UP_SELECTED_WEEK = (GAP + ROW_HEIGHT) * NUMBER_ROWS;
+    const HEIGHT_WEEKS = (GAP + ROW_HEIGHT) * NUMBER_WEEKS;
+
+    const ratioY = HEIGHT_UP_SELECTED_WEEK / HEIGHT_WEEKS;
 
     const prevMonth = subMonths(currentDate, 1);
     const nextMonth = addMonths(currentDate, 1);
@@ -151,12 +155,16 @@ export function MonthCalendar() {
             case 1: {
                 verticalBottomBlockApi.start({
                     to: {
-                        y: -HEIGHT_FOUR_WEEKS,
+                        y: -HEIGHT_WEEKS,
                     },
                     onResolve: () => {
                         setWeeklyItems();
                         setIsOpened(false);
                         setIsAnimating(false);
+
+                        setTimeout(() => {
+                            verticalBottomBlockApi.set({ y: 0 });
+                        }, 0);
                     },
                 });
 
@@ -167,12 +175,17 @@ export function MonthCalendar() {
             case 4: {
                 verticalBottomBlockApi.start({
                     to: {
-                        y: -HEIGHT_FOUR_WEEKS,
+                        y: -HEIGHT_WEEKS,
+                    },
+                    onResolve: () => {
+                        setTimeout(() => {
+                            verticalBottomBlockApi.set({ y: 0 });
+                        }, 0);
                     },
                 });
                 verticalCalendarApi.start({
                     to: {
-                        y: -HEIGHT_FOUR_WEEKS,
+                        y: -HEIGHT_WEEKS,
                     },
                     onResolve: () => {
                         setIsAnimating(false);
@@ -189,7 +202,7 @@ export function MonthCalendar() {
             case 5: {
                 verticalCalendarApi.start({
                     to: {
-                        y: -HEIGHT_FOUR_WEEKS,
+                        y: -HEIGHT_WEEKS,
                     },
                     onResolve: () => {
                         setIsAnimating(false);
@@ -202,7 +215,7 @@ export function MonthCalendar() {
                 });
                 verticalBottomBlockApi.start({
                     to: {
-                        y: -HEIGHT_FOUR_WEEKS,
+                        y: -HEIGHT_WEEKS,
                     },
                 });
 
@@ -292,8 +305,8 @@ export function MonthCalendar() {
 
         const deltaY = lastPosition.y + e.clientY - pointerStart.y;
 
-        if (deltaY <= -240) {
-            verticalCalendarApi.set({ y: -240 });
+        if (deltaY <= -HEIGHT_WEEKS) {
+            verticalCalendarApi.set({ y: -HEIGHT_WEEKS });
             return;
         }
 
@@ -318,21 +331,21 @@ export function MonthCalendar() {
                 closeCalendar();
                 setLastPosition((prev) => ({
                     ...prev,
-                    y: -HEIGHT_FOUR_WEEKS,
+                    y: -HEIGHT_WEEKS,
                 }));
             } else {
                 openCalendar();
                 setLastPosition((prev) => ({ ...prev, y: 0 }));
             }
         } else {
-            if (deltaY >= -240 + 50) {
+            if (deltaY >= -HEIGHT_WEEKS + 50) {
                 openCalendar();
                 setLastPosition((prev) => ({ ...prev, y: 0 }));
             } else {
                 closeCalendar();
                 setLastPosition((prev) => ({
                     ...prev,
-                    y: -HEIGHT_FOUR_WEEKS,
+                    y: -HEIGHT_WEEKS,
                 }));
             }
         }
@@ -432,6 +445,11 @@ export function MonthCalendar() {
         );
     }
 
+    const getGapClass = (date: Date) => {
+        const weeksInMonth = getWeeksInMonth(date, { weekStartsOn: 1 });
+        return weeksInMonth === 6 ? "gap-y-2" : "gap-y-5";
+    };
+
     return (
         <div className="flex h-full flex-col ">
             <DaysOfWeek />
@@ -441,7 +459,7 @@ export function MonthCalendar() {
                     touchAction: "none",
                 }}
             >
-                <div className="grid h-[280px] grid-cols-[30px_1fr]">
+                <div className="grid grid-cols-[30px_1fr] items-start">
                     <Weeks
                         isMonthView={shouldShowMonthView()}
                         currentDate={currentDate}
@@ -453,7 +471,10 @@ export function MonthCalendar() {
                         {items.map((item) => (
                             <div
                                 key={`${item.toISOString()}`}
-                                className="grid grid-cols-7 gap-x-1 gap-y-5"
+                                className={cn(
+                                    "grid grid-cols-7 gap-x-1",
+                                    getGapClass(item),
+                                )}
                             >
                                 {datesInMonth(item).map((day) => (
                                     <div
