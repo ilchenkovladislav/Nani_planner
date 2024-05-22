@@ -45,7 +45,6 @@ export function MonthCalendar() {
     const GAP = NUMBER_WEEKS === 4 ? 20 : 8;
     const HEIGHT_UP_SELECTED_WEEK = (GAP + ROW_HEIGHT) * NUMBER_ROWS;
     const HEIGHT_WEEKS = (GAP + ROW_HEIGHT) * NUMBER_WEEKS;
-
     const ratioY = HEIGHT_UP_SELECTED_WEEK / HEIGHT_WEEKS;
 
     const prevMonth = subMonths(currentDate, 1);
@@ -150,149 +149,96 @@ export function MonthCalendar() {
 
     function closeCalendar() {
         setIsAnimating(true);
-        switch (getWeekOfMonth(currentDate)) {
-            case 1: {
-                verticalBottomBlockApi.start({
-                    to: {
-                        y: -HEIGHT_WEEKS,
-                    },
-                    onResolve: () => {
-                        setWeeklyItems();
-                        setIsOpened(false);
-                        setIsAnimating(false);
+        const isFirstWeek =
+            getWeekOfMonth(currentDate, { weekStartsOn: 1 }) === 1;
 
-                        setTimeout(() => {
-                            verticalBottomBlockApi.set({ y: 0 });
-                        }, 0);
-                    },
-                });
+        if (isFirstWeek) {
+            verticalBottomBlockApi.start({
+                to: {
+                    y: -HEIGHT_WEEKS,
+                },
+                onResolve: () => {
+                    setWeeklyItems();
+                    setIsOpened(false);
+                    setIsAnimating(false);
 
-                break;
-            }
-            case 2:
-            case 3:
-            case 4: {
-                verticalBottomBlockApi.start({
-                    to: {
-                        y: -HEIGHT_WEEKS,
-                    },
-                    onResolve: () => {
-                        setTimeout(() => {
-                            verticalBottomBlockApi.set({ y: 0 });
-                        }, 0);
-                    },
-                });
-                verticalCalendarApi.start({
-                    to: {
-                        y: -HEIGHT_WEEKS,
-                    },
-                    onResolve: () => {
-                        setIsAnimating(false);
-                        setIsOpened(false);
-                        setTimeout(() => {
-                            verticalCalendarApi.set({ y: 0 });
-                            setWeeklyItems();
-                        }, 0);
-                    },
-                });
+                    setTimeout(() => {
+                        verticalBottomBlockApi.set({ y: 0 });
+                    }, 0);
+                },
+            });
 
-                break;
-            }
-            case 5: {
-                verticalCalendarApi.start({
-                    to: {
-                        y: -HEIGHT_WEEKS,
-                    },
-                    onResolve: () => {
-                        setIsAnimating(false);
-                        setTimeout(() => {
-                            setWeeklyItems();
-                            setIsOpened(false);
-                            verticalCalendarApi.set({ y: 0 });
-                        }, 0);
-                    },
-                });
-                verticalBottomBlockApi.start({
-                    to: {
-                        y: -HEIGHT_WEEKS,
-                    },
-                });
-
-                break;
-            }
-            default:
-                break;
+            return;
         }
+
+        verticalCalendarApi.start({
+            to: {
+                y: -HEIGHT_WEEKS,
+            },
+            onResolve: () => {
+                setIsAnimating(false);
+                setIsOpened(false);
+                setTimeout(() => {
+                    verticalCalendarApi.set({ y: 0 });
+                    setWeeklyItems();
+                }, 0);
+            },
+        });
+
+        verticalBottomBlockApi.start({
+            to: {
+                y: -HEIGHT_WEEKS,
+            },
+            onResolve: () => {
+                setTimeout(() => {
+                    verticalBottomBlockApi.set({ y: 0 });
+                }, 0);
+            },
+        });
     }
 
     function openCalendar() {
         setIsAnimating(true);
-        switch (getWeekOfMonth(currentDate)) {
-            case 1: {
-                verticalBottomBlockApi.start({
-                    to: {
-                        y: 0,
-                    },
-                    onStart: () => {
-                        setIsOpened(true);
-                    },
-                    onResolve: () => {
-                        setMonthlyItems();
-                        setIsAnimating(false);
-                        setTimeout(() => {
-                            verticalCalendarApi.set({ y: 0 });
-                        }, 0);
-                    },
-                });
-                break;
-            }
-            case 2:
-            case 3:
-            case 4: {
-                verticalBottomBlockApi.start({
-                    to: {
-                        y: 0,
-                    },
-                    onStart: () => {
-                        setIsOpened(true);
-                    },
-                    onResolve: () => {
-                        setMonthlyItems();
-                        setIsAnimating(false);
-                    },
-                });
-                verticalCalendarApi.start({
-                    to: {
-                        y: 0,
-                    },
-                });
+        const isFirstWeek =
+            getWeekOfMonth(currentDate, { weekStartsOn: 1 }) === 1;
 
-                break;
-            }
-            case 5: {
-                verticalCalendarApi.start({
-                    to: {
-                        y: 0,
-                    },
-                });
-                verticalBottomBlockApi.start({
-                    to: {
-                        y: 0,
-                    },
-                    onStart: () => {
-                        setIsOpened(true);
-                    },
-                    onResolve: () => {
-                        setMonthlyItems();
-                        setIsAnimating(false);
-                    },
-                });
+        if (isFirstWeek) {
+            verticalBottomBlockApi.start({
+                to: {
+                    y: 0,
+                },
+                onStart: () => {
+                    setIsOpened(true);
+                },
+                onResolve: () => {
+                    setMonthlyItems();
+                    setIsAnimating(false);
+                    setTimeout(() => {
+                        verticalCalendarApi.set({ y: 0 });
+                    }, 0);
+                },
+            });
 
-                break;
-            }
-            default:
-                break;
+            return;
         }
+
+        verticalBottomBlockApi.start({
+            to: {
+                y: 0,
+            },
+            onStart: () => {
+                setIsOpened(true);
+            },
+            onResolve: () => {
+                setMonthlyItems();
+                setIsAnimating(false);
+            },
+        });
+        verticalCalendarApi.start({
+            to: {
+                y: 0,
+            },
+        });
     }
 
     function handlePointerDown(e: PointerEvent<HTMLDivElement>) {
