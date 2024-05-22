@@ -4,6 +4,7 @@ import { MonthCalendar } from "@/components/MonthCalendar/MonthCalendar";
 import { Link } from "@tanstack/react-router";
 import { useSpring, animated } from "@react-spring/web";
 import { useCurrentDateStore } from "@/store/currentDate";
+import { FaListUl } from "react-icons/fa";
 
 const variants = [
     "top left",
@@ -29,18 +30,25 @@ export function MonthView() {
     }));
 
     return (
-        <>
-            <Link
-                to="/yearView"
-                search={{ month: `${currentDate.getMonth()}` }}
-                className="relative z-10 block bg-white"
-            >
-                <div>{format(currentDate, "yyyy LLLL", { locale: ru })}</div>
-            </Link>
+        <div className="grid min-h-screen grid-rows-[min-content_1fr]">
+            <div className="flex justify-between">
+                <Link
+                    to="/yearView"
+                    search={{ month: `${currentDate.getMonth()}` }}
+                    className="relative z-10 block bg-white"
+                >
+                    <div>
+                        {format(currentDate, "yyyy LLLL", { locale: ru })}
+                    </div>
+                </Link>
+                <Link to="/listView">
+                    <FaListUl />
+                </Link>
+            </div>
 
             <animated.div style={styles}>
                 <MonthCalendar />
             </animated.div>
-        </>
+        </div>
     );
 }

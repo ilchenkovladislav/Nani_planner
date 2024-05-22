@@ -19,7 +19,7 @@ import { CalendarCarousel } from "../CalendarCarousel/CalendarCarousel";
 import { CalendarDay } from "../CalendarDay/CalendarDay";
 import { MyEditor } from "@/components/MyEditor/MyEditor";
 import { useCurrentDateStore } from "@/store/currentDate";
-import { db } from "@/db";
+import { PlanType, db } from "@/db";
 import { useDebouncedCallback } from "use-debounce";
 import { Editor, JSONContent } from "@tiptap/react";
 import { useLiveQuery } from "dexie-react-hooks";
@@ -67,7 +67,7 @@ export function MonthCalendar() {
 
     async function getContent(key: string): Promise<JSONContent | string> {
         try {
-            const data = plans?.find((plan) => plan.id === key);
+            const data = plans?.find((plan) => plan.key === key);
 
             if (data) {
                 return JSON.parse(data.editorJSON);
@@ -382,14 +382,16 @@ export function MonthCalendar() {
         updateCurrentDate(day);
     }
 
-    const updatePlan = (key: string, editor: onUpdateProps["editor"]) => {
+    const updatePlan = (key: string, type: PlanType, editor: Editor) => {
         if (editor.getText().trim().length === 0) {
-            db.plans.delete(key);
+            db.plans.delete(plans?.find((plan) => plan.key === key)?.id);
             return;
         }
 
         db.plans.put({
-            id: key,
+            key,
+            type,
+            date: currentDate.toISOString(),
             editorJSON: JSON.stringify(editor.getJSON()),
         });
     };
@@ -397,23 +399,23 @@ export function MonthCalendar() {
     const debouncedUpdateDay = useDebouncedCallback(
         ({ editor }: onUpdateProps) => {
             const key = `${currentDate.getFullYear()}-${currentDate.getMonth()}-${currentDate.getDate()}`;
-            updatePlan(key, editor);
+            const type: PlanType = "day";
+            updatePlan(key, type, editor);
         },
         1000,
     );
 
-    const debouncedUpdateWeek = useDebouncedCallback(
-        ({ editor }: onUpdateProps) => {
-            const key = `${currentDate.getFullYear()}-${getWeek(currentDate)}`;
-            updatePlan(key, editor);
-        },
-        1000,
-    );
+    const debouncedUpdateWeek = useDebouncedCallback(({ editor }) => {
+        const key = `${currentDate.getFullYear()}-${getWeek(currentDate)}`;
+        const type: PlanType = "week";
+        updatePlan(key, type, editor);
+    }, 1000);
 
     const debouncedUpdateMonth = useDebouncedCallback(
         ({ editor }: onUpdateProps) => {
             const key = `${currentDate.getFullYear()}-${currentDate.getMonth()}`;
-            updatePlan(key, editor);
+            const type: PlanType = "month";
+            updatePlan(key, type, editor);
         },
         1000,
     );
@@ -421,7 +423,7 @@ export function MonthCalendar() {
     function hasPlan(day: Date) {
         return plans?.find(
             (plan) =>
-                plan.id ===
+                plan.key ===
                 `${day.getFullYear()}-${day.getMonth()}-${day.getDate()}`,
         );
     }
