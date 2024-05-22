@@ -285,10 +285,11 @@ export function MonthCalendar() {
 
     function handlePointerDown(e: PointerEvent<HTMLDivElement>) {
         setPointerStart({ x: e.clientX, y: e.clientY });
-        setIsTransitioning(true);
     }
 
     function handlePointerMove(e: PointerEvent<HTMLDivElement>) {
+        if (!isTransitioning) setIsTransitioning(true);
+
         const deltaY = lastPosition.y + e.clientY - pointerStart.y;
 
         if (deltaY <= -240) {
@@ -306,9 +307,13 @@ export function MonthCalendar() {
     }
 
     function handlePointerUp(e: PointerEvent<HTMLDivElement>) {
+        setIsTransitioning(false);
+
         const deltaY = lastPosition.y + e.clientY - pointerStart.y;
 
-        if (pointerStart.y - e.clientY >= 0) {
+        if (pointerStart.y - e.clientY === 0) return;
+
+        if (pointerStart.y - e.clientY > 0) {
             if (deltaY <= -50) {
                 closeCalendar();
                 setLastPosition((prev) => ({
@@ -331,7 +336,6 @@ export function MonthCalendar() {
                 }));
             }
         }
-        setIsTransitioning(false);
     }
 
     const setNextDates = () => {
@@ -433,9 +437,7 @@ export function MonthCalendar() {
             <DaysOfWeek />
             <animated.div
                 style={{
-                    transform: verticalCalendar.y.to(
-                        (y) => `translate3d(0, ${y * ratioY}px, 0)`,
-                    ),
+                    translateY: verticalCalendar.y.to((y) => `${y * ratioY}px`),
                     touchAction: "none",
                 }}
             >
@@ -477,9 +479,7 @@ export function MonthCalendar() {
             <animated.div
                 className="grid h-full border-t bg-background"
                 style={{
-                    transform: verticalBottomBlock.y.to(
-                        (y) => `translate3d(0, ${y}px, 0)`,
-                    ),
+                    translateY: verticalBottomBlock.y.to((y) => `${y}px`),
                     touchAction: "none",
                 }}
                 onPointerDown={handlePointerDown}
