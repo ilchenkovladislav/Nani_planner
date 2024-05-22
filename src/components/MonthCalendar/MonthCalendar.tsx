@@ -7,7 +7,6 @@ import {
     addWeeks,
     getWeekOfMonth,
     getWeek,
-    format,
     getWeeksInMonth,
 } from "date-fns";
 
@@ -26,8 +25,8 @@ import { Editor, JSONContent } from "@tiptap/react";
 import { useLiveQuery } from "dexie-react-hooks";
 import { Indicator } from "../Indicator/Indicator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ru } from "date-fns/locale";
 import { cn } from "@/lib/utils";
+import { formatDay, formatMonth, formatWeekRange } from "@/utils/dateUtils";
 
 const ROW_HEIGHT = 40;
 
@@ -510,15 +509,13 @@ export function MonthCalendar() {
                 <Tabs defaultValue="day" className="w-full">
                     <TabsList className="w-full">
                         <TabsTrigger value="day">
-                            День{" "}
-                            {format(currentDate, "(d MMMM)", { locale: ru })}
+                            День ({formatDay(currentDate)})
                         </TabsTrigger>
                         <TabsTrigger value="week">
-                            Неделя {format(currentDate, "(w)")}
+                            Неделя ({formatWeekRange(currentDate)})
                         </TabsTrigger>
                         <TabsTrigger value="month">
-                            Месяц{" "}
-                            {format(currentDate, "(LLLL)", { locale: ru })}
+                            Месяц ({formatMonth(currentDate)})
                         </TabsTrigger>
                     </TabsList>
                     <TabsContent value="day">
