@@ -67,7 +67,7 @@ export function MonthCalendar() {
 
     const plans = useLiveQuery(() => db.plans.toArray());
 
-    async function getContent(key: string): Promise<JSONContent | string> {
+    function getContent(key: string): JSONContent | string {
         try {
             const data = plans?.find((plan) => plan.key === key);
 
@@ -80,19 +80,19 @@ export function MonthCalendar() {
         return "";
     }
 
-    async function getDayContent(): Promise<JSONContent | string> {
+    function getDayContent(): JSONContent | string {
         const key = `${currentDate.getFullYear()}-${currentDate.getMonth()}-${currentDate.getDate()}`;
-        return await getContent(key);
+        return getContent(key);
     }
 
-    async function getWeekContent(): Promise<JSONContent | string> {
+    function getWeekContent(): JSONContent | string {
         const key = `${currentDate.getFullYear()}-${getWeek(currentDate)}`;
-        return await getContent(key);
+        return getContent(key);
     }
 
-    async function getMonthContent(): Promise<JSONContent | string> {
+    function getMonthContent(): JSONContent | string {
         const key = `${currentDate.getFullYear()}-${currentDate.getMonth()}`;
-        return await getContent(key);
+        return getContent(key);
     }
 
     const [dayContent, setDayContent] = useState<JSONContent | string>("");
@@ -100,10 +100,11 @@ export function MonthCalendar() {
     const [monthContent, setMonthContent] = useState<JSONContent | string>("");
 
     useEffect(() => {
-        getDayContent().then((data) => setDayContent(data));
-        getWeekContent().then((data) => setWeekContent(data));
-        getMonthContent().then((data) => setMonthContent(data));
-    }, [currentDate]);
+        if (!plans) return;
+        setDayContent(getDayContent());
+        setWeekContent(getWeekContent());
+        setMonthContent(getMonthContent());
+    }, [currentDate, plans]);
 
     function shouldShowMonthView() {
         // === При открытом календаре ===
