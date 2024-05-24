@@ -10,14 +10,13 @@ import {
     startOfWeek,
 } from "date-fns";
 
-export function getISOWeeksOfMonth(date: Date): number[] {
+export function getISOWeeksOfMonth(date: Date): Date[] {
     const start = startOfMonth(date);
     const end = endOfMonth(date);
 
     const weeks = eachWeekOfInterval({ start, end }, { weekStartsOn: 1 });
 
-    const isoWeekNumbers = weeks.map((week) => getISOWeek(week));
-    return isoWeekNumbers;
+    return weeks;
 }
 
 export function isCurrentWeek(week: number) {

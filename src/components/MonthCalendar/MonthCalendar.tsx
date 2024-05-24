@@ -22,11 +22,11 @@ import { useCurrentDateStore } from "@/store/currentDate";
 import { PlanType, db } from "@/db";
 import { useDebouncedCallback } from "use-debounce";
 import { Editor, JSONContent } from "@tiptap/react";
-import { useLiveQuery } from "dexie-react-hooks";
 import { Indicator } from "../Indicator/Indicator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
 import { formatDay, formatMonth, formatWeekRange } from "@/utils/dateUtils";
+import { usePlans } from "@/hooks/usePlans";
 
 const ROW_HEIGHT = 40;
 
@@ -65,7 +65,7 @@ export function MonthCalendar() {
         y: 0,
     }));
 
-    const plans = useLiveQuery(() => db.plans.toArray());
+    const { plans, hasDayPlan } = usePlans();
 
     function getContent(key: string): JSONContent | string {
         try {
@@ -383,14 +383,6 @@ export function MonthCalendar() {
         1000,
     );
 
-    function hasPlan(day: Date) {
-        return plans?.find(
-            (plan) =>
-                plan.key ===
-                `${day.getFullYear()}-${day.getMonth()}-${day.getDate()}`,
-        );
-    }
-
     const getGapClass = (date: Date) => {
         const weeksInMonth = getWeeksInMonth(date, { weekStartsOn: 1 });
         return weeksInMonth === 6 ? "gap-y-2" : "gap-y-5";
@@ -427,7 +419,9 @@ export function MonthCalendar() {
                                         key={day.toString()}
                                         className="relative flex justify-center"
                                     >
-                                        {hasPlan(day) && <Indicator />}
+                                        {hasDayPlan(day) && (
+                                            <Indicator className="top-1" />
+                                        )}
                                         <CalendarDay
                                             isOpened={isOpened}
                                             onDayClick={handleDayClick}

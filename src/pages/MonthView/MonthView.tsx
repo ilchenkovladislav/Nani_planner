@@ -5,6 +5,8 @@ import { Link } from "@tanstack/react-router";
 import { useSpring, animated } from "@react-spring/web";
 import { useCurrentDateStore } from "@/store/currentDate";
 import { FaListUl } from "react-icons/fa";
+import { Indicator } from "@/components/Indicator/Indicator";
+import { usePlans } from "@/hooks/usePlans";
 
 const variants = [
     "top left",
@@ -29,18 +31,25 @@ export function MonthView() {
         to: { scale: 1 },
     }));
 
+    const { hasMonthPlan } = usePlans();
+
     return (
         <div className="grid min-h-screen grid-rows-[min-content_1fr]">
             <div className="z-10 flex justify-between bg-background">
-                <Link
-                    to="/yearView"
-                    search={{ month: `${currentDate.getMonth()}` }}
-                    className="relative z-10 block bg-white"
-                >
-                    <div>
-                        {format(currentDate, "yyyy LLLL", { locale: ru })}
-                    </div>
-                </Link>
+                <div className="relative grid items-center">
+                    <Link
+                        to="/yearView"
+                        search={{ month: `${currentDate.getMonth()}` }}
+                        className="relative z-10 block bg-white"
+                    >
+                        <div>
+                            {format(currentDate, "yyyy LLLL", { locale: ru })}
+                        </div>
+                    </Link>
+                    {hasMonthPlan(currentDate) && (
+                        <Indicator className="-right-3" />
+                    )}
+                </div>
                 <Link to="/listView">
                     <FaListUl />
                 </Link>
