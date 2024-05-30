@@ -26,15 +26,16 @@ export function CalendarCarousel({
             to: {
                 x: -CALENDAR_WIDTH * 2,
             },
-            onResolve: () => {
-                if (cb) {
-                    setTimeout(() => {
-                        cb();
-                    }, 0);
-                }
+            onResolve: async () => {
+                if (!cb) return;
+
+                await new Promise<void>((resolve) => {
+                    cb();
+                    resolve();
+                });
                 setTimeout(() => {
                     centeringCarousel();
-                }, 1);
+                }, 0);
             },
         });
     };
@@ -52,15 +53,16 @@ export function CalendarCarousel({
             to: {
                 x: 0,
             },
-            onResolve: () => {
-                if (cb) {
-                    setTimeout(() => {
-                        cb();
-                    }, 0);
-                }
+            onResolve: async () => {
+                if (!cb) return;
+
+                await new Promise<void>((resolve) => {
+                    cb();
+                    resolve();
+                });
                 setTimeout(() => {
                     centeringCarousel();
-                }, 1);
+                }, 0);
             },
         });
     };

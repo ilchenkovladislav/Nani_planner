@@ -7,7 +7,7 @@ import {
     addWeeks,
     getWeekOfMonth,
     getWeek,
-    format,
+    getWeeksInMonth,
 } from "date-fns";
 
 import { getDaysInMonthWithISOWeeks, getWeekDates } from "@/lib/calendarUtils";
@@ -22,14 +22,13 @@ import { useCurrentDateStore } from "@/store/currentDate";
 import { PlanType, db } from "@/db";
 import { useDebouncedCallback } from "use-debounce";
 import { Editor, JSONContent } from "@tiptap/react";
-import { useLiveQuery } from "dexie-react-hooks";
 import { Indicator } from "../Indicator/Indicator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ru } from "date-fns/locale";
+import { cn } from "@/lib/utils";
+import { formatDay, formatMonth, formatWeekRange } from "@/utils/dateUtils";
+import { usePlans } from "@/hooks/usePlans";
 
-const GAP = 20;
 const ROW_HEIGHT = 40;
-const HEIGHT_FOUR_WEEKS = GAP * 4 + ROW_HEIGHT * 4;
 
 type onUpdateProps = {
     editor: Editor;
@@ -41,9 +40,12 @@ export function MonthCalendar() {
         (state) => state.updateCurrentDate,
     );
     const NUMBER_ROWS = getWeekOfMonth(currentDate, { weekStartsOn: 1 }) - 1;
-    const HEIGHT_UP_SELECTED_WEEK =
-        GAP * NUMBER_ROWS + ROW_HEIGHT * NUMBER_ROWS;
-    const ratioY = HEIGHT_UP_SELECTED_WEEK / HEIGHT_FOUR_WEEKS;
+    const NUMBER_WEEKS = getWeeksInMonth(currentDate, { weekStartsOn: 1 }) - 1;
+
+    const GAP = NUMBER_WEEKS === 4 ? 20 : 8;
+    const HEIGHT_UP_SELECTED_WEEK = (GAP + ROW_HEIGHT) * NUMBER_ROWS;
+    const HEIGHT_WEEKS = (GAP + ROW_HEIGHT) * NUMBER_WEEKS;
+    const ratioY = HEIGHT_UP_SELECTED_WEEK / HEIGHT_WEEKS;
 
     const prevMonth = subMonths(currentDate, 1);
     const nextMonth = addMonths(currentDate, 1);
@@ -63,9 +65,9 @@ export function MonthCalendar() {
         y: 0,
     }));
 
-    const plans = useLiveQuery(() => db.plans.toArray());
+    const { plans, hasDayPlan } = usePlans();
 
-    async function getContent(key: string): Promise<JSONContent | string> {
+    function getContent(key: string): JSONContent | string {
         try {
             const data = plans?.find((plan) => plan.key === key);
 
@@ -78,19 +80,19 @@ export function MonthCalendar() {
         return "";
     }
 
-    async function getDayContent(): Promise<JSONContent | string> {
+    function getDayContent(): JSONContent | string {
         const key = `${currentDate.getFullYear()}-${currentDate.getMonth()}-${currentDate.getDate()}`;
-        return await getContent(key);
+        return getContent(key);
     }
 
-    async function getWeekContent(): Promise<JSONContent | string> {
+    function getWeekContent(): JSONContent | string {
         const key = `${currentDate.getFullYear()}-${getWeek(currentDate)}`;
-        return await getContent(key);
+        return getContent(key);
     }
 
-    async function getMonthContent(): Promise<JSONContent | string> {
+    function getMonthContent(): JSONContent | string {
         const key = `${currentDate.getFullYear()}-${currentDate.getMonth()}`;
-        return await getContent(key);
+        return getContent(key);
     }
 
     const [dayContent, setDayContent] = useState<JSONContent | string>("");
@@ -98,10 +100,11 @@ export function MonthCalendar() {
     const [monthContent, setMonthContent] = useState<JSONContent | string>("");
 
     useEffect(() => {
-        getDayContent().then((data) => setDayContent(data));
-        getWeekContent().then((data) => setWeekContent(data));
-        getMonthContent().then((data) => setMonthContent(data));
-    }, [currentDate]);
+        if (!plans) return;
+        setDayContent(getDayContent());
+        setWeekContent(getWeekContent());
+        setMonthContent(getMonthContent());
+    }, [currentDate, plans]);
 
     function shouldShowMonthView() {
         // === При открытом календаре ===
@@ -147,152 +150,109 @@ export function MonthCalendar() {
 
     function closeCalendar() {
         setIsAnimating(true);
-        switch (getWeekOfMonth(currentDate)) {
-            case 1: {
-                verticalBottomBlockApi.start({
-                    to: {
-                        y: -HEIGHT_FOUR_WEEKS,
-                    },
-                    onResolve: () => {
-                        setWeeklyItems();
-                        setIsOpened(false);
-                        setIsAnimating(false);
-                    },
-                });
+        const isFirstWeek =
+            getWeekOfMonth(currentDate, { weekStartsOn: 1 }) === 1;
 
-                break;
-            }
-            case 2:
-            case 3:
-            case 4: {
-                verticalBottomBlockApi.start({
-                    to: {
-                        y: -HEIGHT_FOUR_WEEKS,
-                    },
-                });
-                verticalCalendarApi.start({
-                    to: {
-                        y: -HEIGHT_FOUR_WEEKS,
-                    },
-                    onResolve: () => {
-                        setIsAnimating(false);
-                        setIsOpened(false);
-                        setTimeout(() => {
-                            verticalCalendarApi.set({ y: 0 });
-                            setWeeklyItems();
-                        }, 0);
-                    },
-                });
+        if (isFirstWeek) {
+            verticalBottomBlockApi.start({
+                to: {
+                    y: -HEIGHT_WEEKS,
+                },
+                onResolve: () => {
+                    setWeeklyItems();
+                    setIsOpened(false);
+                    setIsAnimating(false);
 
-                break;
-            }
-            case 5: {
-                verticalCalendarApi.start({
-                    to: {
-                        y: -HEIGHT_FOUR_WEEKS,
-                    },
-                    onResolve: () => {
-                        setIsAnimating(false);
-                        setTimeout(() => {
-                            setWeeklyItems();
-                            setIsOpened(false);
-                            verticalCalendarApi.set({ y: 0 });
-                        }, 0);
-                    },
-                });
-                verticalBottomBlockApi.start({
-                    to: {
-                        y: -HEIGHT_FOUR_WEEKS,
-                    },
-                });
+                    setTimeout(() => {
+                        verticalBottomBlockApi.set({ y: 0 });
+                    }, 0);
+                },
+            });
 
-                break;
-            }
-            default:
-                break;
+            return;
         }
+
+        verticalCalendarApi.start({
+            to: {
+                y: -HEIGHT_WEEKS,
+            },
+            onResolve: () => {
+                setIsAnimating(false);
+                setIsOpened(false);
+                setTimeout(() => {
+                    verticalCalendarApi.set({ y: 0 });
+                    setWeeklyItems();
+                }, 0);
+            },
+        });
+
+        verticalBottomBlockApi.start({
+            to: {
+                y: -HEIGHT_WEEKS,
+            },
+            onResolve: () => {
+                setTimeout(() => {
+                    verticalBottomBlockApi.set({ y: 0 });
+                }, 0);
+            },
+        });
     }
 
     function openCalendar() {
         setIsAnimating(true);
-        switch (getWeekOfMonth(currentDate)) {
-            case 1: {
-                verticalBottomBlockApi.start({
-                    to: {
-                        y: 0,
-                    },
-                    onStart: () => {
-                        setIsOpened(true);
-                    },
-                    onResolve: () => {
-                        setMonthlyItems();
-                        setIsAnimating(false);
-                        setTimeout(() => {
-                            verticalCalendarApi.set({ y: 0 });
-                        }, 0);
-                    },
-                });
-                break;
-            }
-            case 2:
-            case 3:
-            case 4: {
-                verticalBottomBlockApi.start({
-                    to: {
-                        y: 0,
-                    },
-                    onStart: () => {
-                        setIsOpened(true);
-                    },
-                    onResolve: () => {
-                        setMonthlyItems();
-                        setIsAnimating(false);
-                    },
-                });
-                verticalCalendarApi.start({
-                    to: {
-                        y: 0,
-                    },
-                });
+        const isFirstWeek =
+            getWeekOfMonth(currentDate, { weekStartsOn: 1 }) === 1;
 
-                break;
-            }
-            case 5: {
-                verticalCalendarApi.start({
-                    to: {
-                        y: 0,
-                    },
-                });
-                verticalBottomBlockApi.start({
-                    to: {
-                        y: 0,
-                    },
-                    onStart: () => {
-                        setIsOpened(true);
-                    },
-                    onResolve: () => {
-                        setMonthlyItems();
-                        setIsAnimating(false);
-                    },
-                });
+        if (isFirstWeek) {
+            verticalBottomBlockApi.start({
+                to: {
+                    y: 0,
+                },
+                onStart: () => {
+                    setIsOpened(true);
+                },
+                onResolve: () => {
+                    setMonthlyItems();
+                    setIsAnimating(false);
+                    setTimeout(() => {
+                        verticalCalendarApi.set({ y: 0 });
+                    }, 0);
+                },
+            });
 
-                break;
-            }
-            default:
-                break;
+            return;
         }
+
+        verticalBottomBlockApi.start({
+            to: {
+                y: 0,
+            },
+            onStart: () => {
+                setIsOpened(true);
+            },
+            onResolve: () => {
+                setMonthlyItems();
+                setIsAnimating(false);
+            },
+        });
+        verticalCalendarApi.start({
+            to: {
+                y: 0,
+            },
+        });
     }
 
     function handlePointerDown(e: PointerEvent<HTMLDivElement>) {
         setPointerStart({ x: e.clientX, y: e.clientY });
-        setIsTransitioning(true);
     }
 
     function handlePointerMove(e: PointerEvent<HTMLDivElement>) {
+        if (!isTransitioning) setIsTransitioning(true);
+
         const deltaY = lastPosition.y + e.clientY - pointerStart.y;
 
-        if (deltaY <= -240) {
-            verticalCalendarApi.set({ y: -240 });
+        if (deltaY <= -HEIGHT_WEEKS) {
+            verticalCalendarApi.set({ y: -HEIGHT_WEEKS });
             return;
         }
 
@@ -306,32 +266,35 @@ export function MonthCalendar() {
     }
 
     function handlePointerUp(e: PointerEvent<HTMLDivElement>) {
+        setIsTransitioning(false);
+
         const deltaY = lastPosition.y + e.clientY - pointerStart.y;
 
-        if (pointerStart.y - e.clientY >= 0) {
+        if (pointerStart.y - e.clientY === 0) return;
+
+        if (pointerStart.y - e.clientY > 0) {
             if (deltaY <= -50) {
                 closeCalendar();
                 setLastPosition((prev) => ({
                     ...prev,
-                    y: -HEIGHT_FOUR_WEEKS,
+                    y: -HEIGHT_WEEKS,
                 }));
             } else {
                 openCalendar();
                 setLastPosition((prev) => ({ ...prev, y: 0 }));
             }
         } else {
-            if (deltaY >= -240 + 50) {
+            if (deltaY >= -HEIGHT_WEEKS + 50) {
                 openCalendar();
                 setLastPosition((prev) => ({ ...prev, y: 0 }));
             } else {
                 closeCalendar();
                 setLastPosition((prev) => ({
                     ...prev,
-                    y: -HEIGHT_FOUR_WEEKS,
+                    y: -HEIGHT_WEEKS,
                 }));
             }
         }
-        setIsTransitioning(false);
     }
 
     const setNextDates = () => {
@@ -420,26 +383,21 @@ export function MonthCalendar() {
         1000,
     );
 
-    function hasPlan(day: Date) {
-        return plans?.find(
-            (plan) =>
-                plan.key ===
-                `${day.getFullYear()}-${day.getMonth()}-${day.getDate()}`,
-        );
-    }
+    const getGapClass = (date: Date) => {
+        const weeksInMonth = getWeeksInMonth(date, { weekStartsOn: 1 });
+        return weeksInMonth === 6 ? "gap-y-2" : "gap-y-5";
+    };
 
     return (
         <div className="flex h-full flex-col ">
             <DaysOfWeek />
             <animated.div
                 style={{
-                    transform: verticalCalendar.y.to(
-                        (y) => `translate3d(0, ${y * ratioY}px, 0)`,
-                    ),
+                    translateY: verticalCalendar.y.to((y) => `${y * ratioY}px`),
                     touchAction: "none",
                 }}
             >
-                <div className="grid h-[280px] grid-cols-[30px_1fr]">
+                <div className="grid grid-cols-[30px_1fr] items-start">
                     <Weeks
                         isMonthView={shouldShowMonthView()}
                         currentDate={currentDate}
@@ -451,14 +409,19 @@ export function MonthCalendar() {
                         {items.map((item) => (
                             <div
                                 key={`${item.toISOString()}`}
-                                className="grid grid-cols-7 gap-x-1 gap-y-5"
+                                className={cn(
+                                    "grid grid-cols-7 gap-x-1",
+                                    getGapClass(item),
+                                )}
                             >
                                 {datesInMonth(item).map((day) => (
                                     <div
                                         key={day.toString()}
                                         className="relative flex justify-center"
                                     >
-                                        {hasPlan(day) && <Indicator />}
+                                        {hasDayPlan(day) && (
+                                            <Indicator className="top-1" />
+                                        )}
                                         <CalendarDay
                                             isOpened={isOpened}
                                             onDayClick={handleDayClick}
@@ -477,9 +440,7 @@ export function MonthCalendar() {
             <animated.div
                 className="grid h-full border-t bg-background"
                 style={{
-                    transform: verticalBottomBlock.y.to(
-                        (y) => `translate3d(0, ${y}px, 0)`,
-                    ),
+                    translateY: verticalBottomBlock.y.to((y) => `${y}px`),
                     touchAction: "none",
                 }}
                 onPointerDown={handlePointerDown}
@@ -489,15 +450,13 @@ export function MonthCalendar() {
                 <Tabs defaultValue="day" className="w-full">
                     <TabsList className="w-full">
                         <TabsTrigger value="day">
-                            День{" "}
-                            {format(currentDate, "(d MMMM)", { locale: ru })}
+                            День ({formatDay(currentDate)})
                         </TabsTrigger>
                         <TabsTrigger value="week">
-                            Неделя {format(currentDate, "(w)")}
+                            Неделя ({formatWeekRange(currentDate)})
                         </TabsTrigger>
                         <TabsTrigger value="month">
-                            Месяц{" "}
-                            {format(currentDate, "(LLLL)", { locale: ru })}
+                            Месяц ({formatMonth(currentDate)})
                         </TabsTrigger>
                     </TabsList>
                     <TabsContent value="day">
