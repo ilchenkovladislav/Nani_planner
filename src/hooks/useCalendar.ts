@@ -7,10 +7,6 @@ import { useCalendarStore } from "@/store/calendar";
 export function useCalendar() {
     const currentDate = useCurrentDateStore((state) => state.currentDate);
     const NUMBER_WEEKS = getWeeksInMonth(currentDate, { weekStartsOn: 1 }) - 1;
-    const [isOpened, setIsOpened] = useState(true);
-    const [isTransitioning, setIsTransitioning] = useState(false);
-    const [isAnimating, setIsAnimating] = useState(false);
-
     const GAP = NUMBER_WEEKS === 4 ? 20 : 8;
     const ROW_HEIGHT = 40;
     const HEIGHT_WEEKS = (GAP + ROW_HEIGHT) * NUMBER_WEEKS;
@@ -23,7 +19,16 @@ export function useCalendar() {
     const { styles, stylesApi, stylesBottomBlock, stylesBottomBlockApi } =
         useCalendarSpringStore((state) => state);
 
-    const { setMonthlyItems, setWeeklyItems } = useCalendarStore();
+    const {
+        setMonthlyItems,
+        setWeeklyItems,
+        isOpened,
+        isTransitioning,
+        isAnimating,
+        setIsOpened,
+        setIsTransitioning,
+        setIsAnimating,
+    } = useCalendarStore();
 
     function handlePointerDown(e: PointerEvent<HTMLDivElement>) {
         setPointerStart({ y: e.clientY });
@@ -137,6 +142,23 @@ export function useCalendar() {
         }
     }
 
+    function shouldShowMonthView() {
+        // === При открытом календаре ===
+        if (isOpened) {
+            return true;
+        }
+
+        // === При закрытом календаре ===
+        if (isAnimating) {
+            return true;
+        }
+
+        if (isTransitioning) {
+            return true;
+        }
+        return false;
+    }
+
     return {
         handlers: {
             onPointerDown: handlePointerDown,
@@ -148,5 +170,6 @@ export function useCalendar() {
         isTransitioning,
         isAnimating,
         isOpened,
+        shouldShowMonthView,
     };
 }

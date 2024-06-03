@@ -1,4 +1,13 @@
-import { format, isToday } from "date-fns";
+import {
+    addMonths,
+    addWeeks,
+    format,
+    isSameISOWeek,
+    isSameMonth,
+    isToday,
+    subMonths,
+    subWeeks,
+} from "date-fns";
 import { ru } from "date-fns/locale";
 import { MonthCalendar } from "@/components/MonthCalendar/MonthCalendar";
 import { Link } from "@tanstack/react-router";
@@ -8,6 +17,9 @@ import { FaListUl } from "react-icons/fa";
 import { Indicator } from "@/components/Indicator/Indicator";
 import { usePlans } from "@/hooks/usePlans";
 import { TodayButton } from "@/components/TodayButton/TodayButton";
+import { useCalendarCarousel } from "@/hooks/useCalendarCarousel";
+import { useCalendarStore } from "@/store/calendar";
+import { useCalendar } from "@/hooks/useCalendar";
 
 const variants = [
     "top left",
@@ -36,6 +48,78 @@ export function MonthView() {
     }));
 
     const { hasMonthPlan } = usePlans();
+    const { next, prev } = useCalendarCarousel();
+    const { isOpened } = useCalendarStore();
+    const {
+        setNextMonth,
+        setPrevMonth,
+        setMonth,
+        setNextWeek,
+        setPrevWeek,
+        setWeek,
+    } = useCalendarStore();
+
+    function handleClickToday() {
+        const today = new Date();
+
+        if (isOpened) {
+            if (isSameMonth(currentDate, today)) {
+                updateCurrentDate(today);
+                return;
+            }
+
+            const nextMonth = addMonths(currentDate, 1);
+            if (isSameMonth(nextMonth, today)) {
+                next(() => {
+                    updateCurrentDate(today);
+                    setNextMonth();
+                });
+
+                return;
+            }
+
+            const prevMonth = subMonths(currentDate, 1);
+            if (isSameMonth(prevMonth, today)) {
+                prev(() => {
+                    updateCurrentDate(today);
+                    setPrevMonth();
+                });
+
+                return;
+            }
+
+            updateCurrentDate(today);
+            setMonth(today);
+        } else {
+            if (isSameISOWeek(currentDate, today)) {
+                updateCurrentDate(today);
+                return;
+            }
+
+            const nextWeek = addWeeks(currentDate, 1);
+            if (isSameISOWeek(nextWeek, today)) {
+                next(() => {
+                    updateCurrentDate(today);
+                    setNextWeek();
+                });
+
+                return;
+            }
+
+            const prevWeek = subWeeks(currentDate, 1);
+            if (isSameISOWeek(prevWeek, today)) {
+                prev(() => {
+                    updateCurrentDate(today);
+                    setPrevWeek();
+                });
+
+                return;
+            }
+
+            updateCurrentDate(today);
+            setWeek(today);
+        }
+    }
 
     return (
         <>
@@ -68,9 +152,7 @@ export function MonthView() {
             </div>
             <TodayButton
                 className="fixed bottom-5 right-5 z-20"
-                onClick={() => {
-                    updateCurrentDate(new Date());
-                }}
+                onClick={handleClickToday}
                 show={!isToday(currentDate)}
             />
         </>

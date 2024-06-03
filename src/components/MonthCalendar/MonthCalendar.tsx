@@ -51,16 +51,21 @@ export function MonthCalendar() {
 
     const {
         isOpened,
-        isAnimating,
-        isTransitioning,
         styles,
         stylesBottomBlock,
         handlers,
+        shouldShowMonthView,
     } = useCalendar();
 
     const slides = useCalendarStore((state) => state.slides);
-    const { setNextMonth, setPrevMonth, setNextWeek, setPrevWeek } =
-        useCalendarStore();
+    const {
+        setNextMonth,
+        setPrevMonth,
+        setNextWeek,
+        setPrevWeek,
+        setWeek,
+        setMonth,
+    } = useCalendarStore();
 
     const { plans, hasDayPlan } = usePlans();
 
@@ -102,23 +107,6 @@ export function MonthCalendar() {
         setWeekContent(getWeekContent());
         setMonthContent(getMonthContent());
     }, [currentDate, plans]);
-
-    function shouldShowMonthView() {
-        // === При открытом календаре ===
-        if (isOpened) {
-            return true;
-        }
-
-        // === При закрытом календаре ===
-        if (isAnimating) {
-            return true;
-        }
-
-        if (isTransitioning) {
-            return true;
-        }
-        return false;
-    }
 
     const datesInMonth = (date: Date) =>
         shouldShowMonthView()
@@ -163,6 +151,11 @@ export function MonthCalendar() {
 
     function handleDayClick(day: Date) {
         updateCurrentDate(day);
+        if (isOpened) {
+            setMonth(day);
+        } else {
+            setWeek(day);
+        }
     }
 
     const updatePlan = (key: string, type: PlanType, editor: Editor) => {
