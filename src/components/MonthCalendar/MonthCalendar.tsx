@@ -1,4 +1,4 @@
-import { useEffect, useState, type PointerEvent } from "react";
+import { useEffect, useState } from "react";
 
 import {
     subMonths,
@@ -12,7 +12,7 @@ import {
 
 import { getDaysInMonthWithISOWeeks, getWeekDates } from "@/lib/calendarUtils";
 import { DaysOfWeek } from "../DaysOfWeek/DaysOfWeek";
-import { animated, useSpring } from "@react-spring/web";
+import { animated } from "@react-spring/web";
 import { Weeks } from "../Weeks/Weeks";
 import "./MonthCalendar.css";
 import { CalendarCarousel } from "../CalendarCarousel/CalendarCarousel";
@@ -27,6 +27,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
 import { formatDay, formatMonth, formatWeekRange } from "@/utils/dateUtils";
 import { usePlans } from "@/hooks/usePlans";
+import { useCalendar } from "@/hooks/useCalendar";
+import { useCalendarStore } from "@/store/calendar";
 
 const ROW_HEIGHT = 40;
 
@@ -47,23 +49,23 @@ export function MonthCalendar() {
     const HEIGHT_WEEKS = (GAP + ROW_HEIGHT) * NUMBER_WEEKS;
     const ratioY = HEIGHT_UP_SELECTED_WEEK / HEIGHT_WEEKS;
 
-    const prevMonth = subMonths(currentDate, 1);
-    const nextMonth = addMonths(currentDate, 1);
+    const {
+        isOpened,
+        styles,
+        stylesBottomBlock,
+        handlers,
+        shouldShowMonthView,
+    } = useCalendar();
 
-    const [items, setItems] = useState([prevMonth, currentDate, nextMonth]);
-    const [isOpened, setIsOpened] = useState(true);
-    const [isTransitioning, setIsTransitioning] = useState(false);
-    const [isAnimating, setIsAnimating] = useState(false);
-    const [pointerStart, setPointerStart] = useState({ x: 0, y: 0 });
-    const [lastPosition, setLastPosition] = useState({
-        y: 0,
-    });
-
-    const [verticalCalendar, verticalCalendarApi] = useSpring(() => ({ y: 0 }));
-
-    const [verticalBottomBlock, verticalBottomBlockApi] = useSpring(() => ({
-        y: 0,
-    }));
+    const slides = useCalendarStore((state) => state.slides);
+    const {
+        setNextMonth,
+        setPrevMonth,
+        setNextWeek,
+        setPrevWeek,
+        setWeek,
+        setMonth,
+    } = useCalendarStore();
 
     const { plans, hasDayPlan } = usePlans();
 
@@ -106,206 +108,16 @@ export function MonthCalendar() {
         setMonthContent(getMonthContent());
     }, [currentDate, plans]);
 
-    function shouldShowMonthView() {
-        // === При открытом календаре ===
-        if (isOpened) {
-            return true;
-        }
-
-        // === При закрытом календаре ===
-        if (isAnimating) {
-            return true;
-        }
-
-        if (isTransitioning) {
-            return true;
-        }
-        return false;
-    }
-
     const datesInMonth = (date: Date) =>
         shouldShowMonthView()
             ? getDaysInMonthWithISOWeeks(date)
             : getWeekDates(date);
 
-    function setWeeklyItems() {
-        const getWeeklyItems = (currentDate: Date): Date[] => [
-            subWeeks(currentDate, 1),
-            currentDate,
-            addWeeks(currentDate, 1),
-        ];
-        const items = getWeeklyItems(currentDate);
-        setItems(items);
-    }
-
-    function setMonthlyItems() {
-        const getMonthlyItems = (currentDate: Date): Date[] => [
-            prevMonth,
-            currentDate,
-            nextMonth,
-        ];
-        const items = getMonthlyItems(currentDate);
-        setItems(items);
-    }
-
-    function closeCalendar() {
-        setIsAnimating(true);
-        const isFirstWeek =
-            getWeekOfMonth(currentDate, { weekStartsOn: 1 }) === 1;
-
-        if (isFirstWeek) {
-            verticalBottomBlockApi.start({
-                to: {
-                    y: -HEIGHT_WEEKS,
-                },
-                onResolve: () => {
-                    setWeeklyItems();
-                    setIsOpened(false);
-                    setIsAnimating(false);
-
-                    setTimeout(() => {
-                        verticalBottomBlockApi.set({ y: 0 });
-                    }, 0);
-                },
-            });
-
-            return;
-        }
-
-        verticalCalendarApi.start({
-            to: {
-                y: -HEIGHT_WEEKS,
-            },
-            onResolve: () => {
-                setIsAnimating(false);
-                setIsOpened(false);
-                setTimeout(() => {
-                    verticalCalendarApi.set({ y: 0 });
-                    setWeeklyItems();
-                }, 0);
-            },
-        });
-
-        verticalBottomBlockApi.start({
-            to: {
-                y: -HEIGHT_WEEKS,
-            },
-            onResolve: () => {
-                setTimeout(() => {
-                    verticalBottomBlockApi.set({ y: 0 });
-                }, 0);
-            },
-        });
-    }
-
-    function openCalendar() {
-        setIsAnimating(true);
-        const isFirstWeek =
-            getWeekOfMonth(currentDate, { weekStartsOn: 1 }) === 1;
-
-        if (isFirstWeek) {
-            verticalBottomBlockApi.start({
-                to: {
-                    y: 0,
-                },
-                onStart: () => {
-                    setIsOpened(true);
-                },
-                onResolve: () => {
-                    setMonthlyItems();
-                    setIsAnimating(false);
-                    setTimeout(() => {
-                        verticalCalendarApi.set({ y: 0 });
-                    }, 0);
-                },
-            });
-
-            return;
-        }
-
-        verticalBottomBlockApi.start({
-            to: {
-                y: 0,
-            },
-            onStart: () => {
-                setIsOpened(true);
-            },
-            onResolve: () => {
-                setMonthlyItems();
-                setIsAnimating(false);
-            },
-        });
-        verticalCalendarApi.start({
-            to: {
-                y: 0,
-            },
-        });
-    }
-
-    function handlePointerDown(e: PointerEvent<HTMLDivElement>) {
-        setPointerStart({ x: e.clientX, y: e.clientY });
-    }
-
-    function handlePointerMove(e: PointerEvent<HTMLDivElement>) {
-        if (!isTransitioning) setIsTransitioning(true);
-
-        const deltaY = lastPosition.y + e.clientY - pointerStart.y;
-
-        if (deltaY <= -HEIGHT_WEEKS) {
-            verticalCalendarApi.set({ y: -HEIGHT_WEEKS });
-            return;
-        }
-
-        if (deltaY >= 0) {
-            verticalCalendarApi.set({ y: 0 });
-            return;
-        }
-
-        verticalCalendarApi.set({ y: deltaY });
-        verticalBottomBlockApi.set({ y: deltaY });
-    }
-
-    function handlePointerUp(e: PointerEvent<HTMLDivElement>) {
-        setIsTransitioning(false);
-
-        const deltaY = lastPosition.y + e.clientY - pointerStart.y;
-
-        if (pointerStart.y - e.clientY === 0) return;
-
-        if (pointerStart.y - e.clientY > 0) {
-            if (deltaY <= -50) {
-                closeCalendar();
-                setLastPosition((prev) => ({
-                    ...prev,
-                    y: -HEIGHT_WEEKS,
-                }));
-            } else {
-                openCalendar();
-                setLastPosition((prev) => ({ ...prev, y: 0 }));
-            }
-        } else {
-            if (deltaY >= -HEIGHT_WEEKS + 50) {
-                openCalendar();
-                setLastPosition((prev) => ({ ...prev, y: 0 }));
-            } else {
-                closeCalendar();
-                setLastPosition((prev) => ({
-                    ...prev,
-                    y: -HEIGHT_WEEKS,
-                }));
-            }
-        }
-    }
-
     const setNextDates = () => {
         if (isOpened) {
-            setItems((prev) => {
-                return [prev[1], prev[2], addMonths(prev[2], 1)];
-            });
+            setNextMonth();
         } else {
-            setItems((prev) => {
-                return [prev[1], prev[2], addWeeks(prev[2], 1)];
-            });
+            setNextWeek();
         }
     };
 
@@ -321,13 +133,9 @@ export function MonthCalendar() {
 
     const setPrevDates = () => {
         if (isOpened) {
-            setItems((prev) => {
-                return [subMonths(prev[0], 1), prev[0], prev[1]];
-            });
+            setPrevMonth();
         } else {
-            setItems((prev) => {
-                return [subWeeks(prev[0], 1), prev[0], prev[1]];
-            });
+            setPrevWeek();
         }
     };
 
@@ -343,6 +151,11 @@ export function MonthCalendar() {
 
     function handleDayClick(day: Date) {
         updateCurrentDate(day);
+        if (isOpened) {
+            setMonth(day);
+        } else {
+            setWeek(day);
+        }
     }
 
     const updatePlan = (key: string, type: PlanType, editor: Editor) => {
@@ -393,7 +206,7 @@ export function MonthCalendar() {
             <DaysOfWeek />
             <animated.div
                 style={{
-                    translateY: verticalCalendar.y.to((y) => `${y * ratioY}px`),
+                    translateY: styles.y.to((y) => `${y * ratioY}px`),
                     touchAction: "none",
                 }}
             >
@@ -406,15 +219,15 @@ export function MonthCalendar() {
                         onNext={handleNextSlide}
                         onPrev={handlePrevSlide}
                     >
-                        {items.map((item) => (
+                        {slides.map((slide) => (
                             <div
-                                key={`${item.toISOString()}`}
+                                key={`${slide.toISOString()}`}
                                 className={cn(
                                     "grid grid-cols-7 gap-x-1",
-                                    getGapClass(item),
+                                    getGapClass(slide),
                                 )}
                             >
-                                {datesInMonth(item).map((day) => (
+                                {datesInMonth(slide).map((day) => (
                                     <div
                                         key={day.toString()}
                                         className="relative flex justify-center"
@@ -440,12 +253,10 @@ export function MonthCalendar() {
             <animated.div
                 className="grid h-full border-t bg-background"
                 style={{
-                    translateY: verticalBottomBlock.y.to((y) => `${y}px`),
+                    translateY: stylesBottomBlock.y.to((y) => `${y}px`),
                     touchAction: "none",
                 }}
-                onPointerDown={handlePointerDown}
-                onPointerMove={handlePointerMove}
-                onPointerUp={handlePointerUp}
+                {...handlers}
             >
                 <Tabs defaultValue="day" className="w-full">
                     <TabsList className="w-full">

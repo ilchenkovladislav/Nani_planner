@@ -1,7 +1,6 @@
+import { useCalendarCarousel } from "@/hooks/useCalendarCarousel";
 import { cn } from "@/lib/utils";
 import { isToday, format, isSameDay, isSameMonth, addMonths } from "date-fns";
-import { useContext } from "react";
-import { CarouselContext } from "../CalendarCarousel/context";
 
 type CalendarDay = {
     day: Date;
@@ -20,7 +19,7 @@ export function CalendarDay({
     setNextDates,
     setPrevDates,
 }: CalendarDay) {
-    const { next, prev } = useContext(CarouselContext);
+    const { next, prev } = useCalendarCarousel();
 
     function handleNext() {
         setNextDates();
