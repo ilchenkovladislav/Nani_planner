@@ -1,4 +1,4 @@
-import { useCalendarCarouselHandlers } from "@/hooks/useCalendarCarouselHandlers";
+import { useCalendarCarousel } from "@/hooks/useCalendarCarousel";
 import { animated } from "@react-spring/web";
 
 type CalendarCarouselProps = {
@@ -12,7 +12,7 @@ export function CalendarCarousel({
     onNext,
     onPrev,
 }: CalendarCarouselProps) {
-    const { handlers, styles } = useCalendarCarouselHandlers(onPrev, onNext);
+    const { handlers, styles } = useCalendarCarousel(onPrev, onNext);
 
     return (
         <div className="carousel-content-wrapper" {...handlers}>

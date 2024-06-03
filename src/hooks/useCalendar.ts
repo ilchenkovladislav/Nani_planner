@@ -1,12 +1,10 @@
 import { useCurrentDateStore } from "@/store/currentDate";
-import { useCalendar } from "@/store/useCalendar";
+import { useCalendarSpringStore } from "@/store/calendarSpring";
 import { getWeeksInMonth } from "date-fns";
 import { useState, type PointerEvent } from "react";
+import { useCalendarStore } from "@/store/calendar";
 
-export function useCalendarHandlers(
-    onOpened?: () => void,
-    onClosed?: () => void,
-) {
+export function useCalendar() {
     const currentDate = useCurrentDateStore((state) => state.currentDate);
     const NUMBER_WEEKS = getWeeksInMonth(currentDate, { weekStartsOn: 1 }) - 1;
     const [isOpened, setIsOpened] = useState(true);
@@ -22,14 +20,10 @@ export function useCalendarHandlers(
         y: 0,
     });
 
-    const {
-        styles,
-        stylesApi,
-        stylesBottomBlock,
-        stylesBottomBlockApi,
-        openCalendar,
-        closeCalendar,
-    } = useCalendar((state) => state);
+    const { styles, stylesApi, stylesBottomBlock, stylesBottomBlockApi } =
+        useCalendarSpringStore((state) => state);
+
+    const { setMonthlyItems, setWeeklyItems } = useCalendarStore();
 
     function handlePointerDown(e: PointerEvent<HTMLDivElement>) {
         setPointerStart({ y: e.clientY });
@@ -55,19 +49,59 @@ export function useCalendarHandlers(
     }
 
     function handleClose() {
-        if (!onClosed) return;
-
-        onClosed();
+        setWeeklyItems();
         setIsAnimating(false);
         setIsOpened(false);
     }
 
     function handleOpen() {
-        if (!onOpened) return;
-
-        onOpened();
+        setMonthlyItems();
         setIsAnimating(false);
         setIsOpened(true);
+    }
+
+    function openCalendar(cb?: () => void) {
+        stylesBottomBlockApi.start({
+            to: {
+                y: 0,
+            },
+            onResolve: () => {
+                if (!cb) return;
+                cb();
+            },
+        });
+        stylesApi.start({
+            to: {
+                y: 0,
+            },
+        });
+    }
+
+    function closeCalendar(cb?: () => void) {
+        stylesApi.start({
+            to: {
+                y: -HEIGHT_WEEKS,
+            },
+            onResolve: () => {
+                if (!cb) return;
+
+                setTimeout(() => {
+                    stylesApi.set({ y: 0 });
+                    cb();
+                }, 0);
+            },
+        });
+
+        stylesBottomBlockApi.start({
+            to: {
+                y: -HEIGHT_WEEKS,
+            },
+            onResolve: () => {
+                setTimeout(() => {
+                    stylesBottomBlockApi.set({ y: 0 });
+                }, 0);
+            },
+        });
     }
 
     function handlePointerUp(e: PointerEvent<HTMLDivElement>) {

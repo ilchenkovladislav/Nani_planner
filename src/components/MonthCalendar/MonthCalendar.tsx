@@ -27,7 +27,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
 import { formatDay, formatMonth, formatWeekRange } from "@/utils/dateUtils";
 import { usePlans } from "@/hooks/usePlans";
-import { useCalendarHandlers } from "@/hooks/useCalendarHandlers";
+import { useCalendar } from "@/hooks/useCalendar";
+import { useCalendarStore } from "@/store/calendar";
 
 const ROW_HEIGHT = 40;
 
@@ -48,31 +49,6 @@ export function MonthCalendar() {
     const HEIGHT_WEEKS = (GAP + ROW_HEIGHT) * NUMBER_WEEKS;
     const ratioY = HEIGHT_UP_SELECTED_WEEK / HEIGHT_WEEKS;
 
-    const prevMonth = subMonths(currentDate, 1);
-    const nextMonth = addMonths(currentDate, 1);
-
-    const [items, setItems] = useState([prevMonth, currentDate, nextMonth]);
-
-    function setWeeklyItems() {
-        const getWeeklyItems = (currentDate: Date): Date[] => [
-            subWeeks(currentDate, 1),
-            currentDate,
-            addWeeks(currentDate, 1),
-        ];
-        const items = getWeeklyItems(currentDate);
-        setItems(items);
-    }
-
-    function setMonthlyItems() {
-        const getMonthlyItems = (currentDate: Date): Date[] => [
-            prevMonth,
-            currentDate,
-            nextMonth,
-        ];
-        const items = getMonthlyItems(currentDate);
-        setItems(items);
-    }
-
     const {
         isOpened,
         isAnimating,
@@ -80,7 +56,11 @@ export function MonthCalendar() {
         styles,
         stylesBottomBlock,
         handlers,
-    } = useCalendarHandlers(setMonthlyItems, setWeeklyItems);
+    } = useCalendar();
+
+    const slides = useCalendarStore((state) => state.slides);
+    const { setNextMonth, setPrevMonth, setNextWeek, setPrevWeek } =
+        useCalendarStore();
 
     const { plans, hasDayPlan } = usePlans();
 
@@ -147,13 +127,9 @@ export function MonthCalendar() {
 
     const setNextDates = () => {
         if (isOpened) {
-            setItems((prev) => {
-                return [prev[1], prev[2], addMonths(prev[2], 1)];
-            });
+            setNextMonth();
         } else {
-            setItems((prev) => {
-                return [prev[1], prev[2], addWeeks(prev[2], 1)];
-            });
+            setNextWeek();
         }
     };
 
@@ -169,13 +145,9 @@ export function MonthCalendar() {
 
     const setPrevDates = () => {
         if (isOpened) {
-            setItems((prev) => {
-                return [subMonths(prev[0], 1), prev[0], prev[1]];
-            });
+            setPrevMonth();
         } else {
-            setItems((prev) => {
-                return [subWeeks(prev[0], 1), prev[0], prev[1]];
-            });
+            setPrevWeek();
         }
     };
 
@@ -254,15 +226,15 @@ export function MonthCalendar() {
                         onNext={handleNextSlide}
                         onPrev={handlePrevSlide}
                     >
-                        {items.map((item) => (
+                        {slides.map((slide) => (
                             <div
-                                key={`${item.toISOString()}`}
+                                key={`${slide.toISOString()}`}
                                 className={cn(
                                     "grid grid-cols-7 gap-x-1",
-                                    getGapClass(item),
+                                    getGapClass(slide),
                                 )}
                             >
-                                {datesInMonth(item).map((day) => (
+                                {datesInMonth(slide).map((day) => (
                                     <div
                                         key={day.toString()}
                                         className="relative flex justify-center"

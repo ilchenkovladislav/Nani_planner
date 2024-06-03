@@ -1,5 +1,5 @@
+import { useCalendarCarousel } from "@/hooks/useCalendarCarousel";
 import { cn } from "@/lib/utils";
-import { useCalendarCarousel } from "@/store/useCalendarCarousel";
 import { isToday, format, isSameDay, isSameMonth, addMonths } from "date-fns";
 
 type CalendarDay = {
@@ -19,8 +19,7 @@ export function CalendarDay({
     setNextDates,
     setPrevDates,
 }: CalendarDay) {
-    const next = useCalendarCarousel((state) => state.next);
-    const prev = useCalendarCarousel((state) => state.prev);
+    const { next, prev } = useCalendarCarousel();
 
     function handleNext() {
         setNextDates();
