@@ -237,7 +237,7 @@ export function MonthCalendar() {
     };
 
     return (
-        <div className="flex h-full flex-col ">
+        <div className="flex h-full flex-col">
             <DaysOfWeek />
             <animated.div
                 style={{
