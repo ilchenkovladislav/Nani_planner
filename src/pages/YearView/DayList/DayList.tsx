@@ -1,3 +1,5 @@
+import { Indicator } from "@/components/Indicator/Indicator";
+import { usePlans } from "@/hooks/usePlans";
 import { cn } from "@/lib/utils";
 import {
     getISOWeek,
@@ -38,6 +40,7 @@ type DayListProps = {
 
 export function DayList(props: DayListProps) {
     const { year, month } = props;
+    const { hasDayPlan, hasWeekPlanByYearView } = usePlans();
 
     return (
         <div>
@@ -52,19 +55,32 @@ export function DayList(props: DayListProps) {
                         return (
                             <div
                                 key={date.toString()}
-                                className={cn({
-                                    "rounded-full bg-blue-100 font-bold text-blue-500":
-                                        isToday(date),
-                                })}
+                                className="relative flex justify-center"
                             >
-                                {day}
+                                {hasDayPlan(date) && (
+                                    <Indicator className="-top-1" />
+                                )}
+                                <div
+                                    key={date.toString()}
+                                    className={cn({
+                                        "rounded-full bg-blue-100 font-bold text-blue-500":
+                                            isToday(date),
+                                    })}
+                                >
+                                    {day}
+                                </div>
                             </div>
                         );
                     })}
                 </div>
                 <div className="grid items-center justify-center gap-1 gap-y-2 text-[10px] text-gray-400">
                     {getWeeks(year, month).map((weekNumber) => (
-                        <div key={weekNumber}>{weekNumber}</div>
+                        <div className="relative flex justify-center">
+                            {hasWeekPlanByYearView(year, weekNumber) && (
+                                <Indicator className="-top-1" />
+                            )}
+                            <div key={weekNumber}>{weekNumber}</div>
+                        </div>
                     ))}
                 </div>
             </div>

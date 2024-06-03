@@ -6,8 +6,8 @@ import { useCallback } from "react";
 export function usePlans() {
     const plans = useLiveQuery(() => db.plans.toArray());
 
-    function hasPlan(key: string, type: PlanType) {
-        return plans?.find((plan) => plan.type === type && plan.key === key);
+    function hasPlan(key: string, type: PlanType): boolean {
+        return !!plans?.find((plan) => plan.type === type && plan.key === key);
     }
 
     const hasDayPlan = useCallback(
@@ -30,6 +30,16 @@ export function usePlans() {
         [plans],
     );
 
+    const hasWeekPlanByYearView = useCallback(
+        (year: number, week: number) => {
+            const key = `${year}-${week}`;
+            const type: PlanType = "week";
+
+            return hasPlan(key, type);
+        },
+        [plans],
+    );
+
     const hasMonthPlan = useCallback(
         (date: Date) => {
             const key = `${date.getFullYear()}-${date.getMonth()}`;
@@ -40,5 +50,11 @@ export function usePlans() {
         [plans],
     );
 
-    return { plans, hasDayPlan, hasWeekPlan, hasMonthPlan };
+    return {
+        plans,
+        hasDayPlan,
+        hasWeekPlan,
+        hasMonthPlan,
+        hasWeekPlanByYearView,
+    };
 }
