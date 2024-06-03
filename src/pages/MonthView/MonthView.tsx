@@ -19,7 +19,6 @@ import { usePlans } from "@/hooks/usePlans";
 import { TodayButton } from "@/components/TodayButton/TodayButton";
 import { useCalendarCarousel } from "@/hooks/useCalendarCarousel";
 import { useCalendarStore } from "@/store/calendar";
-import { useCalendar } from "@/hooks/useCalendar";
 
 const variants = [
     "top left",
