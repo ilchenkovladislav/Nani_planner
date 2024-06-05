@@ -4,7 +4,6 @@ import { cn } from "@/lib/utils";
 import {
     getISOWeek,
     isSameMonth,
-    format,
     eachDayOfInterval,
     endOfISOWeek,
     endOfMonth,
@@ -14,14 +13,22 @@ import {
 } from "date-fns";
 
 function getWeeks(year: number, month: number): number[] {
-    const weeks = new Set<number>();
-    const date = new Date(year, month);
-    while (date.getMonth() === month) {
-        const weekNumber = getISOWeek(date);
-        weeks.add(weekNumber);
-        date.setDate(date.getDate() + 1);
+    const firstDay = new Date(year, month, 1);
+    const lastDay = new Date(year, month + 1, 0);
+
+    const firstWeek = getISOWeek(firstDay);
+    const lastWeek = getISOWeek(lastDay);
+
+    const weeks = Array.from(
+        { length: (lastWeek < firstWeek ? 52 : lastWeek) - firstWeek + 1 },
+        (_, i) => firstWeek + i,
+    );
+
+    if (lastWeek < firstWeek) {
+        weeks.push(1);
     }
-    return [...weeks];
+
+    return weeks;
 }
 
 export function getDates(year: number, month: number): Date[] {
@@ -40,6 +47,7 @@ type DayListProps = {
 
 export function DayList(props: DayListProps) {
     const { year, month } = props;
+
     const { hasDayPlan, hasWeekPlanByYearView } = usePlans();
 
     return (
@@ -50,7 +58,7 @@ export function DayList(props: DayListProps) {
                         if (!isSameMonth(date, new Date(year, month)))
                             return <div key={index} />;
 
-                        const day = format(date, "d");
+                        const day = date.getDate();
 
                         return (
                             <div
@@ -60,26 +68,21 @@ export function DayList(props: DayListProps) {
                                 {hasDayPlan(date) && (
                                     <Indicator className="-top-1" />
                                 )}
-                                <div
-                                    key={date.toString()}
-                                    className={cn({
-                                        "rounded-full bg-blue-100 font-bold text-blue-500":
-                                            isToday(date),
-                                    })}
-                                >
-                                    {day}
-                                </div>
+                                <div>{day}</div>
                             </div>
                         );
                     })}
                 </div>
                 <div className="grid items-center justify-center gap-1 gap-y-2 text-[10px] text-gray-400">
                     {getWeeks(year, month).map((weekNumber) => (
-                        <div className="relative flex justify-center">
+                        <div
+                            className="relative flex justify-center"
+                            key={weekNumber}
+                        >
                             {hasWeekPlanByYearView(year, weekNumber) && (
                                 <Indicator className="-top-1" />
                             )}
-                            <div key={weekNumber}>{weekNumber}</div>
+                            <div>{weekNumber}</div>
                         </div>
                     ))}
                 </div>
