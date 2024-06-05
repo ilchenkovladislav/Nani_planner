@@ -1,5 +1,6 @@
 import { addMonths, addWeeks, subMonths, subWeeks } from "date-fns";
 import { create } from "zustand";
+import { useCurrentDateStore } from "./currentDate";
 
 type calendarState = {
     slides: [Date, Date, Date];
@@ -9,17 +10,13 @@ type calendarState = {
     setIsOpened: (isOpened: boolean) => void;
     setIsTransitioning: (isTransitioning: boolean) => void;
     setIsAnimating: (isAnimating: boolean) => void;
-    setNextMonth: () => void;
-    setNextWeek: () => void;
-    setPrevMonth: () => void;
-    setPrevWeek: () => void;
     setMonth: (date: Date) => void;
     setWeek: (date: Date) => void;
     setMonthlyItems: () => void;
     setWeeklyItems: () => void;
 };
 
-const currentDate = new Date();
+const currentDate = useCurrentDateStore.getState().currentDate;
 const prevMonth = subMonths(currentDate, 1);
 const nextMonth = addMonths(currentDate, 1);
 
@@ -31,40 +28,6 @@ export const useCalendarStore = create<calendarState>((set) => ({
     setIsOpened: (isOpened) => set({ isOpened }),
     setIsTransitioning: (isTransitioning) => set({ isTransitioning }),
     setIsAnimating: (isAnimating) => set({ isAnimating }),
-    setNextMonth: () =>
-        set((state) => ({
-            slides: [
-                state.slides[1],
-                state.slides[2],
-                addMonths(state.slides[2], 1),
-            ],
-        })),
-    setNextWeek: () =>
-        set((state) => ({
-            slides: [
-                state.slides[1],
-                state.slides[2],
-                addWeeks(state.slides[2], 1),
-            ],
-        })),
-
-    setPrevMonth: () =>
-        set((state) => ({
-            slides: [
-                subMonths(state.slides[0], 1),
-                state.slides[0],
-                state.slides[1],
-            ],
-        })),
-    setPrevWeek: () =>
-        set((state) => ({
-            slides: [
-                subWeeks(state.slides[0], 1),
-                state.slides[0],
-                state.slides[1],
-            ],
-        })),
-
     setMonth: (date: Date) =>
         set({
             slides: [subMonths(date, 1), date, addMonths(date, 1)],

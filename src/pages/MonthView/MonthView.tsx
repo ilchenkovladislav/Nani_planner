@@ -49,14 +49,6 @@ export function MonthView() {
     const { hasMonthPlan } = usePlans();
     const { next, prev } = useCalendarCarousel();
     const { isOpened } = useCalendarStore();
-    const {
-        setNextMonth,
-        setPrevMonth,
-        setMonth,
-        setNextWeek,
-        setPrevWeek,
-        setWeek,
-    } = useCalendarStore();
 
     function handleClickToday() {
         const today = new Date();
@@ -71,7 +63,6 @@ export function MonthView() {
             if (isSameMonth(nextMonth, today)) {
                 next(() => {
                     updateCurrentDate(today);
-                    setNextMonth();
                 });
 
                 return;
@@ -81,14 +72,12 @@ export function MonthView() {
             if (isSameMonth(prevMonth, today)) {
                 prev(() => {
                     updateCurrentDate(today);
-                    setPrevMonth();
                 });
 
                 return;
             }
 
             updateCurrentDate(today);
-            setMonth(today);
         } else {
             if (isSameISOWeek(currentDate, today)) {
                 updateCurrentDate(today);
@@ -99,7 +88,6 @@ export function MonthView() {
             if (isSameISOWeek(nextWeek, today)) {
                 next(() => {
                     updateCurrentDate(today);
-                    setNextWeek();
                 });
 
                 return;
@@ -109,14 +97,12 @@ export function MonthView() {
             if (isSameISOWeek(prevWeek, today)) {
                 prev(() => {
                     updateCurrentDate(today);
-                    setPrevWeek();
                 });
 
                 return;
             }
 
             updateCurrentDate(today);
-            setWeek(today);
         }
     }
 

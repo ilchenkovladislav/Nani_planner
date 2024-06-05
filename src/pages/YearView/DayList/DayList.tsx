@@ -1,6 +1,5 @@
 import { Indicator } from "@/components/Indicator/Indicator";
 import { usePlans } from "@/hooks/usePlans";
-import { cn } from "@/lib/utils";
 import {
     getISOWeek,
     isSameMonth,
@@ -9,7 +8,6 @@ import {
     endOfMonth,
     startOfISOWeek,
     startOfMonth,
-    isToday,
 } from "date-fns";
 
 function getWeeks(year: number, month: number): number[] {
