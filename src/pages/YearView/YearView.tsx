@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Calendar } from "./Calendar/Calendar";
 import { CalendarCarousel } from "@/components/CalendarCarousel/CalendarCarousel";
 import { useSpring, animated } from "@react-spring/web";
@@ -26,6 +26,15 @@ export function YearView() {
         currentDate.getFullYear(),
         currentDate.getFullYear() + 1,
     ]);
+    const [isLoading, setIsLoading] = useState(true);
+
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            setIsLoading(false);
+        }, 400);
+
+        return () => clearTimeout(timer);
+    }, []);
 
     const [styles] = useSpring(() => ({
         from: { scale: 2, transformOrigin: variants[currentDate.getMonth()] },
@@ -43,9 +52,20 @@ export function YearView() {
     return (
         <animated.div style={styles}>
             <CalendarCarousel onNext={handleNextSlide} onPrev={handlePrevSlide}>
-                {items.map((year) => (
-                    <Calendar key={year} year={year} showDaysOfWeek />
-                ))}
+                {isLoading ? (
+                    <>
+                        <div />
+                        <Calendar
+                            year={currentDate.getFullYear()}
+                            showDaysOfWeek
+                        />
+                        <div />
+                    </>
+                ) : (
+                    items.map((year) => (
+                        <Calendar key={year} year={year} showDaysOfWeek />
+                    ))
+                )}
             </CalendarCarousel>
         </animated.div>
     );
