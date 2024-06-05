@@ -7,8 +7,6 @@ type CalendarDay = {
     onDayClick: (day: Date) => void;
     currentDate: Date;
     isOpened: boolean;
-    setNextDates: () => void;
-    setPrevDates: () => void;
 };
 
 export function CalendarDay({
@@ -16,18 +14,14 @@ export function CalendarDay({
     onDayClick,
     currentDate,
     isOpened,
-    setNextDates,
-    setPrevDates,
 }: CalendarDay) {
     const { next, prev } = useCalendarCarousel();
 
     function handleNext() {
-        setNextDates();
         onDayClick(day);
     }
 
     function handlePrev() {
-        setPrevDates();
         onDayClick(day);
     }
 

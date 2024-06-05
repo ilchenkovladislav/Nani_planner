@@ -58,14 +58,6 @@ export function MonthCalendar() {
     } = useCalendar();
 
     const slides = useCalendarStore((state) => state.slides);
-    const {
-        setNextMonth,
-        setPrevMonth,
-        setNextWeek,
-        setPrevWeek,
-        setWeek,
-        setMonth,
-    } = useCalendarStore();
 
     const { plans, hasDayPlan } = usePlans();
 
@@ -113,17 +105,7 @@ export function MonthCalendar() {
             ? getDaysInMonthWithISOWeeks(date)
             : getWeekDates(date);
 
-    const setNextDates = () => {
-        if (isOpened) {
-            setNextMonth();
-        } else {
-            setNextWeek();
-        }
-    };
-
     function handleNextSlide() {
-        setNextDates();
-
         if (isOpened) {
             updateCurrentDate(addMonths(currentDate, 1));
         } else {
@@ -131,17 +113,7 @@ export function MonthCalendar() {
         }
     }
 
-    const setPrevDates = () => {
-        if (isOpened) {
-            setPrevMonth();
-        } else {
-            setPrevWeek();
-        }
-    };
-
     function handlePrevSlide() {
-        setPrevDates();
-
         if (isOpened) {
             updateCurrentDate(subMonths(currentDate, 1));
         } else {
@@ -151,11 +123,6 @@ export function MonthCalendar() {
 
     function handleDayClick(day: Date) {
         updateCurrentDate(day);
-        if (isOpened) {
-            setMonth(day);
-        } else {
-            setWeek(day);
-        }
     }
 
     const updatePlan = (key: string, type: PlanType, editor: Editor) => {
@@ -240,8 +207,6 @@ export function MonthCalendar() {
                                             onDayClick={handleDayClick}
                                             day={day}
                                             currentDate={currentDate}
-                                            setPrevDates={setPrevDates}
-                                            setNextDates={setNextDates}
                                         />
                                     </div>
                                 ))}

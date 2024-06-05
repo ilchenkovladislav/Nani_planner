@@ -1,7 +1,7 @@
 import { useCurrentDateStore } from "@/store/currentDate";
 import { useCalendarSpringStore } from "@/store/calendarSpring";
 import { getWeeksInMonth } from "date-fns";
-import { useState, type PointerEvent } from "react";
+import { useEffect, useState, type PointerEvent } from "react";
 import { useCalendarStore } from "@/store/calendar";
 
 export function useCalendar() {
@@ -28,7 +28,17 @@ export function useCalendar() {
         setIsOpened,
         setIsTransitioning,
         setIsAnimating,
+        setMonth,
+        setWeek,
     } = useCalendarStore();
+
+    useEffect(() => {
+        if (isOpened) {
+            setMonth(currentDate);
+        } else {
+            setWeek(currentDate);
+        }
+    }, [currentDate]);
 
     function handlePointerDown(e: PointerEvent<HTMLDivElement>) {
         setPointerStart({ y: e.clientY });
