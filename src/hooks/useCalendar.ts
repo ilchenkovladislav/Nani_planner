@@ -47,6 +47,17 @@ export function useCalendar() {
         }
     }, [currentDate]);
 
+    useEffect(() => {
+        if (!isOpened) {
+            setTimeout(() => {
+                stylesApi.set({
+                    paddingTop: PADDING_TOP,
+                    paddingBottom: PADDING_BOTTOM,
+                });
+            }, 0);
+        }
+    }, [currentDate]);
+
     const bind = useDrag(
         ({
             last,
@@ -58,7 +69,8 @@ export function useCalendar() {
             if (last) {
                 setIsTransitioning(false);
                 setIsAnimating(true);
-                if (dy > 0) {
+
+                if (vy > 0.5 && dy > 0) {
                     openCalendar(handleOpen);
                     return;
                 }
