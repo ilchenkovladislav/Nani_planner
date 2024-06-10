@@ -3,14 +3,12 @@ import { useEffect, useState } from "react";
 import {
     subMonths,
     addMonths,
-    subWeeks,
-    addWeeks,
     getWeekOfMonth,
     getWeek,
     getWeeksInMonth,
 } from "date-fns";
 
-import { getDaysInMonthWithISOWeeks, getWeekDates } from "@/lib/calendarUtils";
+import { getDaysInMonthWithISOWeeks } from "@/lib/calendarUtils";
 import { DaysOfWeek } from "../DaysOfWeek/DaysOfWeek";
 import { animated } from "@react-spring/web";
 import { Weeks } from "../Weeks/Weeks";
@@ -29,6 +27,7 @@ import { formatDay, formatMonth, formatWeekRange } from "@/utils/dateUtils";
 import { usePlans } from "@/hooks/usePlans";
 import { useCalendar } from "@/hooks/useCalendar";
 import { useCalendarStore } from "@/store/calendar";
+import { WeekCalendar } from "../WeekCalendar/WeekCalendar";
 
 const ROW_HEIGHT = 40;
 
@@ -49,13 +48,8 @@ export function MonthCalendar() {
     const HEIGHT_WEEKS = (GAP + ROW_HEIGHT) * NUMBER_WEEKS;
     const ratioY = HEIGHT_UP_SELECTED_WEEK / HEIGHT_WEEKS;
 
-    const {
-        isOpened,
-        styles,
-        stylesBottomBlock,
-        handlers,
-        shouldShowMonthView,
-    } = useCalendar();
+    const { isOpened, styles, stylesBottomBlock, shouldShowMonthView, bind } =
+        useCalendar();
 
     const slides = useCalendarStore((state) => state.slides);
 
@@ -100,25 +94,12 @@ export function MonthCalendar() {
         setMonthContent(getMonthContent());
     }, [currentDate, plans]);
 
-    const datesInMonth = (date: Date) =>
-        shouldShowMonthView()
-            ? getDaysInMonthWithISOWeeks(date)
-            : getWeekDates(date);
-
     function handleNextSlide() {
-        if (isOpened) {
-            updateCurrentDate(addMonths(currentDate, 1));
-        } else {
-            updateCurrentDate(addWeeks(currentDate, 1));
-        }
+        updateCurrentDate(addMonths(currentDate, 1));
     }
 
     function handlePrevSlide() {
-        if (isOpened) {
-            updateCurrentDate(subMonths(currentDate, 1));
-        } else {
-            updateCurrentDate(subWeeks(currentDate, 1));
-        }
+        updateCurrentDate(subMonths(currentDate, 1));
     }
 
     function handleDayClick(day: Date) {
@@ -175,6 +156,8 @@ export function MonthCalendar() {
                 style={{
                     translateY: styles.y.to((y) => `${y * ratioY}px`),
                     touchAction: "none",
+                    paddingTop: styles.paddingTop,
+                    paddingBottom: styles.paddingBottom,
                 }}
             >
                 <div className="grid grid-cols-[30px_1fr] items-start">
@@ -182,37 +165,43 @@ export function MonthCalendar() {
                         isMonthView={shouldShowMonthView()}
                         currentDate={currentDate}
                     />
-                    <CalendarCarousel
-                        onNext={handleNextSlide}
-                        onPrev={handlePrevSlide}
-                    >
-                        {slides.map((slide) => (
-                            <div
-                                key={`${slide.toISOString()}`}
-                                className={cn(
-                                    "grid grid-cols-7 gap-x-1",
-                                    getGapClass(slide),
-                                )}
-                            >
-                                {datesInMonth(slide).map((day) => (
-                                    <div
-                                        key={day.toString()}
-                                        className="relative flex justify-center"
-                                    >
-                                        {hasDayPlan(day) && (
-                                            <Indicator className="top-1" />
-                                        )}
-                                        <CalendarDay
-                                            isOpened={isOpened}
-                                            onDayClick={handleDayClick}
-                                            day={day}
-                                            currentDate={currentDate}
-                                        />
-                                    </div>
-                                ))}
-                            </div>
-                        ))}
-                    </CalendarCarousel>
+                    {shouldShowMonthView() ? (
+                        <CalendarCarousel
+                            onNext={handleNextSlide}
+                            onPrev={handlePrevSlide}
+                        >
+                            {slides.map((slide) => (
+                                <div
+                                    key={`${slide.toISOString()}`}
+                                    className={cn(
+                                        "grid grid-cols-7 gap-x-1",
+                                        getGapClass(slide),
+                                    )}
+                                >
+                                    {getDaysInMonthWithISOWeeks(slide).map(
+                                        (day) => (
+                                            <div
+                                                key={day.toString()}
+                                                className="relative flex justify-center"
+                                            >
+                                                {hasDayPlan(day) && (
+                                                    <Indicator className="top-1" />
+                                                )}
+                                                <CalendarDay
+                                                    isOpened={isOpened}
+                                                    onDayClick={handleDayClick}
+                                                    day={day}
+                                                    currentDate={currentDate}
+                                                />
+                                            </div>
+                                        ),
+                                    )}
+                                </div>
+                            ))}
+                        </CalendarCarousel>
+                    ) : (
+                        <WeekCalendar />
+                    )}
                 </div>
             </animated.div>
             <animated.div
@@ -221,7 +210,7 @@ export function MonthCalendar() {
                     translateY: stylesBottomBlock.y.to((y) => `${y}px`),
                     touchAction: "none",
                 }}
-                {...handlers}
+                {...bind()}
             >
                 <Tabs defaultValue="day" className="w-full">
                     <TabsList className="w-full">

@@ -1,23 +1,30 @@
 import { useCurrentDateStore } from "@/store/currentDate";
-import { useCalendarSpringStore } from "@/store/calendarSpring";
-import { getWeeksInMonth } from "date-fns";
-import { useEffect, useState, type PointerEvent } from "react";
+import { getWeekOfMonth, getWeeksInMonth } from "date-fns";
+import { useEffect } from "react";
 import { useCalendarStore } from "@/store/calendar";
+import { useDrag } from "@use-gesture/react";
+import { useSpring } from "@react-spring/web";
 
 export function useCalendar() {
     const currentDate = useCurrentDateStore((state) => state.currentDate);
-    const NUMBER_WEEKS = getWeeksInMonth(currentDate, { weekStartsOn: 1 }) - 1;
-    const GAP = NUMBER_WEEKS === 4 ? 20 : 8;
+    const NUMBER_WEEKS = getWeeksInMonth(currentDate, { weekStartsOn: 1 });
+    const GAP = NUMBER_WEEKS - 1 === 4 ? 20 : 8;
     const ROW_HEIGHT = 40;
-    const HEIGHT_WEEKS = (GAP + ROW_HEIGHT) * NUMBER_WEEKS;
+    const HEIGHT_WEEKS = (GAP + ROW_HEIGHT) * (NUMBER_WEEKS - 1);
 
-    const [pointerStart, setPointerStart] = useState({ y: 0 });
-    const [lastPosition, setLastPosition] = useState({
+    const NUMBER_ROWS = getWeekOfMonth(currentDate, { weekStartsOn: 1 });
+    const PADDING_TOP = (GAP + ROW_HEIGHT) * (NUMBER_ROWS - 1);
+    const PADDING_BOTTOM = (GAP + ROW_HEIGHT) * (NUMBER_WEEKS - NUMBER_ROWS);
+
+    const [styles, stylesApi] = useSpring(() => ({
         y: 0,
-    });
+        paddingTop: 0,
+        paddingBottom: 0,
+    }));
 
-    const { styles, stylesApi, stylesBottomBlock, stylesBottomBlockApi } =
-        useCalendarSpringStore((state) => state);
+    const [stylesBottomBlock, stylesBottomBlockApi] = useSpring(() => ({
+        y: 0,
+    }));
 
     const {
         setMonthlyItems,
@@ -40,28 +47,44 @@ export function useCalendar() {
         }
     }, [currentDate]);
 
-    function handlePointerDown(e: PointerEvent<HTMLDivElement>) {
-        setPointerStart({ y: e.clientY });
-    }
+    const bind = useDrag(
+        ({
+            last,
+            velocity: [, vy],
+            offset: [, oy],
+            direction: [, dy],
+            cancel,
+        }) => {
+            if (last) {
+                setIsTransitioning(false);
+                setIsAnimating(true);
+                if (dy > 0) {
+                    openCalendar(handleOpen);
+                    return;
+                }
 
-    function handlePointerMove(e: PointerEvent<HTMLDivElement>) {
-        if (!isTransitioning) setIsTransitioning(true);
+                if (oy > -100) {
+                    cancel();
+                    openCalendar(handleOpen);
+                }
 
-        const deltaY = lastPosition.y + e.clientY - pointerStart.y;
+                if (oy < -100 || (vy > 0.5 && dy < 0)) {
+                    closeCalendar(handleClose);
+                }
+            } else {
+                if (!isTransitioning) setIsTransitioning(true);
+                stylesApi.set({ paddingTop: 0, paddingBottom: 0 });
 
-        if (deltaY <= -HEIGHT_WEEKS) {
-            stylesApi.set({ y: -HEIGHT_WEEKS });
-            return;
-        }
-
-        if (deltaY >= 0) {
-            stylesApi.set({ y: 0 });
-            return;
-        }
-
-        stylesApi.set({ y: deltaY });
-        stylesBottomBlockApi.set({ y: deltaY });
-    }
+                stylesApi.start({ y: oy });
+                stylesBottomBlockApi.start({ y: oy });
+            }
+        },
+        {
+            axis: "y",
+            bounds: { top: -HEIGHT_WEEKS, bottom: 0 },
+            from: () => [0, styles.y.get()],
+        },
+    );
 
     function handleClose() {
         setWeeklyItems();
@@ -101,7 +124,10 @@ export function useCalendar() {
                 if (!cb) return;
 
                 setTimeout(() => {
-                    stylesApi.set({ y: 0 });
+                    stylesApi.set({
+                        paddingTop: PADDING_TOP,
+                        paddingBottom: PADDING_BOTTOM,
+                    });
                     cb();
                 }, 0);
             },
@@ -111,45 +137,7 @@ export function useCalendar() {
             to: {
                 y: -HEIGHT_WEEKS,
             },
-            onResolve: () => {
-                setTimeout(() => {
-                    stylesBottomBlockApi.set({ y: 0 });
-                }, 0);
-            },
         });
-    }
-
-    function handlePointerUp(e: PointerEvent<HTMLDivElement>) {
-        setIsTransitioning(false);
-
-        const deltaY = lastPosition.y + e.clientY - pointerStart.y;
-
-        if (pointerStart.y - e.clientY === 0) return;
-
-        setIsAnimating(true);
-        if (pointerStart.y - e.clientY > 0) {
-            if (deltaY <= -50) {
-                closeCalendar(handleClose);
-                setLastPosition((prev) => ({
-                    ...prev,
-                    y: -HEIGHT_WEEKS,
-                }));
-            } else {
-                openCalendar(handleOpen);
-                setLastPosition((prev) => ({ ...prev, y: 0 }));
-            }
-        } else {
-            if (deltaY >= -HEIGHT_WEEKS + 50) {
-                openCalendar(handleOpen);
-                setLastPosition((prev) => ({ ...prev, y: 0 }));
-            } else {
-                closeCalendar(handleClose);
-                setLastPosition((prev) => ({
-                    ...prev,
-                    y: -HEIGHT_WEEKS,
-                }));
-            }
-        }
     }
 
     function shouldShowMonthView() {
@@ -170,16 +158,12 @@ export function useCalendar() {
     }
 
     return {
-        handlers: {
-            onPointerDown: handlePointerDown,
-            onPointerMove: handlePointerMove,
-            onPointerUp: handlePointerUp,
-        },
         styles,
         stylesBottomBlock,
         isTransitioning,
         isAnimating,
         isOpened,
         shouldShowMonthView,
+        bind,
     };
 }
