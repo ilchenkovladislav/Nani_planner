@@ -214,14 +214,23 @@ export function MonthCalendar() {
             >
                 <Tabs defaultValue="day" className="w-full">
                     <TabsList className="w-full">
-                        <TabsTrigger value="day">
-                            День ({formatDay(currentDate)})
+                        <TabsTrigger value="day" className="grid grid-rows-2">
+                            <p>День</p>
+                            <p className="text-gray-400">
+                                {formatDay(currentDate)}
+                            </p>
                         </TabsTrigger>
-                        <TabsTrigger value="week">
-                            Неделя ({formatWeekRange(currentDate)})
+                        <TabsTrigger value="week" className="grid grid-rows-2">
+                            <p>Неделя</p>
+                            <p className="text-gray-400">
+                                {formatWeekRange(currentDate)}
+                            </p>
                         </TabsTrigger>
-                        <TabsTrigger value="month">
-                            Месяц ({formatMonth(currentDate)})
+                        <TabsTrigger value="month" className="grid grid-rows-2">
+                            <p>Месяц</p>
+                            <p className="text-gray-400">
+                                {formatMonth(currentDate)}
+                            </p>
                         </TabsTrigger>
                     </TabsList>
                     <TabsContent value="day">
