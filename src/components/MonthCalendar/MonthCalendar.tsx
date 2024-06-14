@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import {
     subMonths,
@@ -56,8 +56,10 @@ export function MonthCalendar() {
     const { plans, hasDayPlan } = usePlans();
 
     function getContent(key: string): JSONContent | string {
+        if (!plans) return "";
+
         try {
-            const data = plans?.find((plan) => plan.key === key);
+            const data = plans.find((plan) => plan.key === key);
 
             if (data) {
                 return JSON.parse(data.editorJSON);
@@ -107,12 +109,14 @@ export function MonthCalendar() {
     }
 
     const updatePlan = (key: string, type: PlanType, editor: Editor) => {
+        const plan = plans?.find((plan) => plan.key === key);
         if (editor.getText().trim().length === 0) {
-            db.plans.delete(plans?.find((plan) => plan.key === key)?.id);
+            db.plans.delete(plan?.id);
             return;
         }
 
         db.plans.put({
+            id: plan?.id,
             key,
             type,
             date: currentDate.toISOString(),
