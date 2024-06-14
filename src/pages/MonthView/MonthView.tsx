@@ -109,14 +109,14 @@ export function MonthView() {
     return (
         <>
             <div className="grid min-h-screen grid-rows-[min-content_1fr]">
-                <div className="z-10 flex justify-between bg-background">
+                <div className="z-10 flex items-center justify-between bg-background p-5">
                     <div className="relative grid items-center">
                         <Link
                             to="/yearView"
                             search={{ month: `${currentDate.getMonth()}` }}
                             className="relative z-10 block bg-white"
                         >
-                            <div>
+                            <div className="text-lg">
                                 {format(currentDate, "yyyy LLLL", {
                                     locale: ru,
                                 })}
@@ -136,7 +136,7 @@ export function MonthView() {
                 </animated.div>
             </div>
             <TodayButton
-                className="fixed bottom-5 right-5 z-20"
+                className="fixed bottom-20 right-5 z-20"
                 onClick={handleClickToday}
                 show={!isToday(currentDate)}
             />

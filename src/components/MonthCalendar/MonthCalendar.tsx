@@ -164,7 +164,7 @@ export function MonthCalendar() {
                     paddingBottom: styles.paddingBottom,
                 }}
             >
-                <div className="grid grid-cols-[30px_1fr] items-start">
+                <div className="grid grid-cols-[20px_1fr] items-start">
                     <Weeks
                         isMonthView={shouldShowMonthView()}
                         currentDate={currentDate}
@@ -178,7 +178,7 @@ export function MonthCalendar() {
                                 <div
                                     key={`${slide.toISOString()}`}
                                     className={cn(
-                                        "grid grid-cols-7 gap-x-1",
+                                        "grid grid-cols-7 gap-x-1 py-2",
                                         getGapClass(slide),
                                     )}
                                 >

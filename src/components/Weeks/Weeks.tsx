@@ -20,14 +20,17 @@ export const Weeks = ({ currentDate, isMonthView }: WeeksProps) => {
     const { hasWeekPlan } = usePlans();
 
     return (
-        <div className={cn("grid border-r-[1px]", gapClass)}>
+        <div className={cn("grid border-r border-gray-100 py-2", gapClass)}>
             {ISOWeeks.map((date) => (
                 <div className="relative flex justify-center">
                     {hasWeekPlan(date) && <Indicator className="top-1" />}
                     <div
-                        className={cn("grid h-10 items-center text-center", {
-                            "text-blue-500": isThisWeek(date),
-                        })}
+                        className={cn(
+                            "grid h-10 items-center text-center text-xs text-gray-400",
+                            {
+                                "text-blue-500": isThisWeek(date),
+                            },
+                        )}
                         key={date.toString()}
                     >
                         {format(date, "I", { locale: ru })}

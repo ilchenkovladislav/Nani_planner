@@ -32,7 +32,7 @@ export function WeekCalendar() {
             {slides.map((slide) => (
                 <div
                     key={`${slide.toISOString()}`}
-                    className={"grid grid-cols-7 gap-x-1"}
+                    className="grid grid-cols-7 gap-x-1 py-2"
                 >
                     {getWeekDates(slide).map((day) => (
                         <div
