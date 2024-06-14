@@ -1,10 +1,17 @@
-import { PlanType, db } from "@/db";
+import { Plan, PlanType, db } from "@/db";
+import { useCurrentDateStore } from "@/store/currentDate";
 import { getWeek } from "date-fns";
-import { useLiveQuery } from "dexie-react-hooks";
-import { useCallback } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 export function usePlans() {
-    const plans = useLiveQuery(() => db.plans.toArray());
+    const [plans, setPlans] = useState<Plan[]>([]);
+    const currentDate = useCurrentDateStore((state) => state.currentDate);
+
+    useEffect(() => {
+        db.plans.toArray().then((plans) => {
+            setPlans(plans);
+        });
+    }, [currentDate]);
 
     function hasPlan(key: string, type: PlanType): boolean {
         return !!plans?.find((plan) => plan.type === type && plan.key === key);
