@@ -108,7 +108,7 @@ export function MonthView() {
 
     return (
         <>
-            <div className="grid min-h-screen grid-rows-[min-content_1fr]">
+            <div className="grid grid-rows-[min-content_1fr]">
                 <div className="z-10 flex items-center justify-between bg-background p-5">
                     <div className="relative grid items-center">
                         <Link

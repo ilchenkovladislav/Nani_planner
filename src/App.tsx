@@ -9,7 +9,7 @@ declare module "@tanstack/react-router" {
 
 function App() {
     return (
-        <div>
+        <div className="h-screen">
             <RouterProvider router={router} />
         </div>
     );
