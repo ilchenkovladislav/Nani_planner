@@ -9,7 +9,7 @@ declare module "@tanstack/react-router" {
 
 function App() {
     return (
-        <div className="h-screen">
+        <div className="font-roboto h-screen">
             <RouterProvider router={router} />
         </div>
     );

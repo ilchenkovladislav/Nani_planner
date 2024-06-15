@@ -26,7 +26,7 @@ export function getContentByType(plan: Plan) {
                             })}
                         </span>
                     </div>
-                    <pre className="text-wrap">
+                    <pre className="font-roboto text-wrap">
                         {jsonToText(plan.editorJSON)}
                     </pre>
                 </div>
@@ -52,7 +52,7 @@ export function getContentByType(plan: Plan) {
                             <span>{format(end, "MMM", { locale: ru })}</span>
                         </div>
                     </div>
-                    <pre className="text-wrap">
+                    <pre className="font-roboto text-wrap">
                         {jsonToText(plan.editorJSON)}
                     </pre>
                 </div>
@@ -79,7 +79,7 @@ export function getContentByType(plan: Plan) {
                             <span>{format(end, "MMM", { locale: ru })}</span>
                         </div>
                     </div>
-                    <pre className="text-wrap">
+                    <pre className="font-roboto text-wrap">
                         {jsonToText(plan.editorJSON)}
                     </pre>
                 </div>

@@ -85,7 +85,7 @@ export function ListView() {
                                 })}
                             </span>
                         </div>
-                        <pre className="text-wrap">
+                        <pre className="font-roboto text-wrap">
                             {jsonToText(plan.editorJSON)}
                         </pre>
                     </div>
@@ -115,7 +115,7 @@ export function ListView() {
                                 </span>
                             </div>
                         </div>
-                        <pre className="text-wrap">
+                        <pre className="font-roboto text-wrap">
                             {jsonToText(plan.editorJSON)}
                         </pre>
                     </div>
@@ -146,7 +146,7 @@ export function ListView() {
                                 </span>
                             </div>
                         </div>
-                        <pre className="text-wrap">
+                        <pre className="font-roboto text-wrap">
                             {jsonToText(plan.editorJSON)}
                         </pre>
                     </div>
