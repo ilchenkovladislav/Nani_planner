@@ -162,6 +162,7 @@ export function MonthCalendar() {
                     touchAction: "none",
                     paddingTop: styles.paddingTop,
                     paddingBottom: styles.paddingBottom,
+                    willChange: "transform",
                 }}
             >
                 <div className="grid grid-cols-[20px_1fr] items-start">
@@ -213,6 +214,7 @@ export function MonthCalendar() {
                 style={{
                     translateY: stylesBottomBlock.y.to((y) => `${y}px`),
                     touchAction: "none",
+                    willChange: "transform",
                 }}
                 {...bind()}
             >
